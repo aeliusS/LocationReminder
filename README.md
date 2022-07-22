@@ -6,7 +6,12 @@ A Todo list app with location reminders that remind the user to do something whe
 
 1. Clone the project to your local machine.
 2. Open the project using Android Studio.
-3. Fill out google_maps_key in app/src/debug/res/values/google_maps_api.xml
+3. Fill out google_maps_key in app/src/debug/res/values/google_maps_api.xml. Sample file below
+```
+<resources>
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">FILL_OUT_HERE</string>
+</resources>
+```
 
 ### Dependencies
 
