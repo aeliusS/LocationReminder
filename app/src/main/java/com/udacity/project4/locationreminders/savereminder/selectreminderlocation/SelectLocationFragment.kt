@@ -11,7 +11,10 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import androidx.core.content.ContextCompat
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Lifecycle
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -37,14 +40,17 @@ class SelectLocationFragment : BaseFragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding =
             DataBindingUtil.inflate(inflater, R.layout.fragment_select_location, container, false)
 
         binding.viewModel = _viewModel
         binding.lifecycleOwner = this
 
-        setHasOptionsMenu(true)
+        // add in the menu options
+        val menuHost: MenuHost = requireActivity()
+        setupMenuOptions(menuHost)
+
         setDisplayHomeAsUpEnabled(true)
 
 //        TODO: add the map setup implementation
@@ -65,27 +71,30 @@ class SelectLocationFragment : BaseFragment() {
         //         and navigate back to the previous fragment to save the reminder and add the geofence
     }
 
+    private fun setupMenuOptions(menuHost: MenuHost) {
+        menuHost.addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.map_options, menu)
+            }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.map_options, menu)
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean =
+                when (menuItem.itemId) {
+                    // TODO: Change the map type based on the user's selection.
+                    R.id.normal_map -> {
+                        true
+                    }
+                    R.id.hybrid_map -> {
+                        true
+                    }
+                    R.id.satellite_map -> {
+                        true
+                    }
+                    R.id.terrain_map -> {
+                        true
+                    }
+                    else -> false
+                }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
-
-    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        // TODO: Change the map type based on the user's selection.
-        R.id.normal_map -> {
-            true
-        }
-        R.id.hybrid_map -> {
-            true
-        }
-        R.id.satellite_map -> {
-            true
-        }
-        R.id.terrain_map -> {
-            true
-        }
-        else -> super.onOptionsItemSelected(item)
-    }
-
 
 }
