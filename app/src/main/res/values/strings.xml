@@ -40,4 +40,8 @@
     <string name="geofence_too_many_geofences">Your app has registered too many geofences.</string>
     <string name="geofence_too_many_pending_intents">You have provided too many PendingIntents to the addGeofences() call.</string>
     <string name="error_adding_geofence">Error Happened, Can\'t Add Geofence</string>
+
+    <!-- New additions -->
+    <string name="add_new_reminder_fab">add new reminder</string>
+    <string name="save_the_reminder_fab">Save the reminder</string>
 </resources>
