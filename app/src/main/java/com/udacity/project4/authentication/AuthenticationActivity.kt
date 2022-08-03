@@ -2,7 +2,9 @@ package com.udacity.project4.authentication
 
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.findNavController
 import com.udacity.project4.R
 
 /**
@@ -16,6 +18,10 @@ class AuthenticationActivity : AppCompatActivity() {
         setContentView(R.layout.activity_authentication)
         Log.d(TAG, "Activity was called")
         // TODO: Have the ReminderListFragment send the user to this activity if they are not logged in
+//        val navController = findNavController(R.id.nav_host_fragment)
+//        onBackPressedDispatcher.addCallback() {
+//            navController.popBackStack(R.id.reminderListFragment, true)
+//        }
 
 //         TODO: Implement the create account and sign in using FirebaseUI, use sign in using email and sign in using Google
 

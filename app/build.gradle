@@ -43,7 +43,8 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     // App dependencies
     implementation "androidx.appcompat:appcompat:$appCompatVersion"
-    implementation "androidx.legacy:legacy-support-v4:$androidXLegacySupport"
+    // implementation "androidx.legacy:legacy-support-v4:$androidXLegacySupport" // previously needed for SwipeRefreshLayout
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
     implementation "androidx.annotation:annotation:$androidXAnnotations"
 
     implementation "androidx.cardview:cardview:$cardVersion"
@@ -51,8 +52,9 @@ dependencies {
     implementation "androidx.recyclerview:recyclerview:$recyclerViewVersion"
     implementation "androidx.constraintlayout:constraintlayout:$constraintVersion"
 
-    implementation 'com.google.code.gson:gson:2.9.1'
-    implementation platform('com.google.firebase:firebase-bom:30.3.1')
+    // implementation 'com.google.code.gson:gson:2.9.1'
+    // implementation platform('com.google.firebase:firebase-bom:30.3.1')
+    implementation 'com.firebaseui:firebase-ui-auth:8.0.1'
 
     // Architecture Components
     //Navigation dependencies
@@ -128,11 +130,8 @@ dependencies {
     androidTestImplementation "org.mockito:mockito-core:$mockitoVersion"
     androidTestImplementation "com.linkedin.dexmaker:dexmaker-mockito:$dexMakerVersion"
 
-
-
     //Maps & Geofencing
     implementation "com.google.android.gms:play-services-location:$playServicesVersion"
     implementation "com.google.android.gms:play-services-maps:$playServicesMapsVersion"
-
 
 }
