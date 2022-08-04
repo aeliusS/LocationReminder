@@ -33,6 +33,12 @@ class ReminderListFragment : BaseFragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        // navigate to the login screen if not authenticated
+        if (FirebaseAuth.getInstance().currentUser == null) {
+            findNavController().navigate(R.id.authenticationActivity)
+            requireActivity().finish()
+        }
+
         binding = FragmentRemindersBinding.inflate(inflater, container, false)
         binding.viewModel = _viewModel
 
@@ -40,12 +46,6 @@ class ReminderListFragment : BaseFragment() {
         setTitle(getString(R.string.app_name))
 
         binding.refreshLayout.setOnRefreshListener { _viewModel.loadReminders() }
-
-        // navigate to the login screen if not authenticated
-        if (FirebaseAuth.getInstance().currentUser == null) {
-            findNavController().navigate(R.id.authenticationActivity)
-            requireActivity().finish()
-        }
 
         return binding.root
     }

@@ -16,8 +16,8 @@ import android.content.Intent
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-
-//TODO: implement the onReceive method to receive the geofencing events at the background
+        // TODO: implement the onReceive method to receive the geofencing events at the background
+        // this class will take care of sending notifications to the user using sendNotification()
 
     }
 }
