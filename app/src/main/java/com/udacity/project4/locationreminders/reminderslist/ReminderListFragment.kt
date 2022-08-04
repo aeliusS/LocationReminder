@@ -2,11 +2,14 @@ package com.udacity.project4.locationreminders.reminderslist
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
+import com.firebase.ui.auth.AuthUI
+import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.R
 import com.udacity.project4.authentication.AuthenticationActivity
 import com.udacity.project4.base.BaseFragment
@@ -18,6 +21,11 @@ import com.udacity.project4.utils.setup
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ReminderListFragment : BaseFragment() {
+
+    companion object {
+        private const val TAG = "ReminderListFragment"
+    }
+
     //use Koin to retrieve the ViewModel instance
     override val _viewModel: RemindersListViewModel by viewModel()
     private lateinit var binding: FragmentRemindersBinding
@@ -25,11 +33,6 @@ class ReminderListFragment : BaseFragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // TODO: validate authentication
-        // val intent = Intent(requireContext(), AuthenticationActivity::class.java)
-        // startActivity(intent)
-        findNavController().navigate(R.id.authenticationActivity)
-
         binding = FragmentRemindersBinding.inflate(inflater, container, false)
         binding.viewModel = _viewModel
 
@@ -37,6 +40,12 @@ class ReminderListFragment : BaseFragment() {
         setTitle(getString(R.string.app_name))
 
         binding.refreshLayout.setOnRefreshListener { _viewModel.loadReminders() }
+
+        // navigate to the login screen if not authenticated
+        if (FirebaseAuth.getInstance().currentUser == null) {
+            findNavController().navigate(R.id.authenticationActivity)
+            requireActivity().finish()
+        }
 
         return binding.root
     }
@@ -60,6 +69,16 @@ class ReminderListFragment : BaseFragment() {
         //load the reminders list on the ui
         _viewModel.loadReminders()
     }
+
+//    private fun observeAuthenticationState() {
+//        _viewModel.authenticationState.observe(viewLifecycleOwner) { authenticationState ->
+//            when(authenticationState) {
+//                RemindersListViewModel.AuthenticationState.AUTHENTICATED -> {
+//                    // binding.
+//                }
+//            }
+//        }
+//    }
 
     private fun navigateToAddReminder() {
         //use the navigationCommand live data to navigate between the fragments
@@ -89,6 +108,12 @@ class ReminderListFragment : BaseFragment() {
                 when (menuItem.itemId) {
                     R.id.logout -> {
                         // TODO: add the logout implementation
+                        AuthUI.getInstance().signOut(requireContext())
+
+                        // navigate to the login screen
+                        findNavController().navigate(R.id.authenticationActivity)
+                        requireActivity().finish()
+
                         true
                     }
                     else -> false

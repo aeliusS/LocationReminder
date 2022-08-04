@@ -13,6 +13,7 @@ android {
         targetSdkVersion 32
         versionCode 1
         versionName "1.0"
+        resConfigs "en"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -34,6 +35,7 @@ android {
     //    enabledForTests = true
     //}
     buildFeatures {
+        viewBinding true
         dataBinding true
     }
     namespace 'com.udacity.project4'
@@ -55,6 +57,7 @@ dependencies {
     // implementation 'com.google.code.gson:gson:2.9.1'
     // implementation platform('com.google.firebase:firebase-bom:30.3.1')
     implementation 'com.firebaseui:firebase-ui-auth:8.0.1'
+    implementation 'com.google.android.gms:play-services-auth:20.2.0' // needed to make email login work
 
     // Architecture Components
     //Navigation dependencies
