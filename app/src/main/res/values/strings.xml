@@ -44,4 +44,6 @@
     <!-- New additions -->
     <string name="add_new_reminder_fab">add new reminder</string>
     <string name="save_the_reminder_fab">Save the reminder</string>
+    <string name="ok">OK</string>
+    <string name="location_permission_not_available">Permission is not available. Requesting location permission.</string>
 </resources>

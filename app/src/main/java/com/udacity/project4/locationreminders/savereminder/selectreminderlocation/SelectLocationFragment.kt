@@ -2,40 +2,52 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
-import android.content.IntentSender
 import android.content.pm.PackageManager
-import android.content.res.Resources
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.*
-import androidx.core.app.ActivityCompat
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
-import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Lifecycle
-import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.location.*
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
+import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
-import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
+import com.udacity.project4.utils.hasPermissions
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
-import org.koin.android.ext.android.inject
+import com.udacity.project4.utils.shouldShowRequestPermissionRationale
+import com.udacity.project4.utils.showSnackbar
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
-class SelectLocationFragment : BaseFragment() {
+const val PERMISSION_REQUEST_LOCATION = 0
+
+class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
+
+    companion object {
+        private const val TAG = "SelectLocationFragment"
+        private val permissionsArray = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
+        } else {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
 
     //Use Koin to get the view model of the SaveReminder
     override val _viewModel: SaveReminderViewModel by sharedViewModel()
@@ -44,8 +56,7 @@ class SelectLocationFragment : BaseFragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        binding =
-            DataBindingUtil.inflate(inflater, R.layout.fragment_select_location, container, false)
+        binding = FragmentSelectLocationBinding.inflate(inflater, container, false)
 
         binding.viewModel = _viewModel
         binding.lifecycleOwner = viewLifecycleOwner
@@ -56,13 +67,26 @@ class SelectLocationFragment : BaseFragment() {
 
         setDisplayHomeAsUpEnabled(true)
 
-//        TODO: add the map setup implementation
-//        TODO: zoom to the user location after taking his permission
-//        TODO: add style to the map
-//        TODO: put a marker to location that the user selected
+        // TODO: add the map setup implementation
+        // Get the SupportMapFragment and request notification when the map is ready to be used.
+        // val mapFragment = requireActivity().supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
+        // mapFragment?.getMapAsync(this)
+
+        for (permission in permissionsArray) {
+            Log.d(TAG, "Permission: $permission")
+        }
+
+        // request runtime permissions if necessary
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestLocationPermissions()
+        }
+        // TODO: zoom to the user location after taking his permission
+
+        // TODO: add style to the map
+        // TODO: put a marker to location that the user selected
 
 
-//        TODO: call this function after the user confirms on the selected location
+        // TODO: call this function after the user confirms on the selected location
         onLocationSelected()
 
         return binding.root
@@ -100,23 +124,70 @@ class SelectLocationFragment : BaseFragment() {
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
-    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
-        val foregroundLocationApproved = (
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(
-                            requireContext(),
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ))
-        val backgroundPermissionApproved =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(
-                            requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                        )
-            } else {
-                true
+    // Register the permissions callback, which handles the user's response to the
+    // system permissions dialog. Save the return value, an instance of
+    // ActivityResultLauncher.
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val granted = permissions.entries.all {
+                Log.d(TAG, "Permission Result: ${it.key}: ${it.value}")
+                it.value
             }
-        return foregroundLocationApproved && backgroundPermissionApproved
+            if (granted) {
+                Log.d(TAG, "Permissions granted")
+            } else {
+                Snackbar.make(
+                    binding.mainLayout,
+                    R.string.permission_denied_explanation,
+                    Snackbar.LENGTH_INDEFINITE
+                )
+                    .setAction(R.string.settings) {
+                        startActivity(Intent().apply {
+                            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                            data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        })
+                    }.show()
+            }
+        }
+
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun requestLocationPermissions() {
+        if (hasPermissions(permissionsArray)) {
+            Log.d(TAG, "Permissions already granted")
+            return
+        }
+        // Permission has not been granted and must be requested.
+        if (shouldShowRequestPermissionRationale(permissionsArray)) {
+            // Provide an additional rationale to the user if the permission was not granted
+            binding.mainLayout.showSnackbar(
+                R.string.permission_denied_explanation,
+                Snackbar.LENGTH_INDEFINITE, R.string.ok
+            ) {
+                requestPermissionLauncher.launch(permissionsArray)
+            }
+
+        } else {
+            // directly ask for permission
+            Log.d(TAG, "Directly asking for permission")
+            Snackbar.make(
+                binding.mainLayout,
+                R.string.location_permission_not_available,
+                Snackbar.LENGTH_SHORT
+            ).show()
+            // Request the permission.
+            requestPermissionLauncher.launch(permissionsArray)
+        }
     }
 
+    override fun onMapReady(googleMap: GoogleMap) {
+        val sydney = LatLng(-33.852, 151.211)
+        googleMap.addMarker(
+            MarkerOptions()
+                .position(sydney)
+                .title("Marker in Sydney")
+        )
+
+    }
 }

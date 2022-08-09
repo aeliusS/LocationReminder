@@ -23,11 +23,13 @@ class MyApp : Application() {
 
     override fun onCreate() {
         // strict mode
+        /*
         val policy = StrictMode.VmPolicy.Builder()
             .detectAll()
             .penaltyLog()
             .build()
         StrictMode.setVmPolicy(policy)
+         */
 
         super.onCreate()
 
