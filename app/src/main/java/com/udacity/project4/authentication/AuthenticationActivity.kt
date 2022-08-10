@@ -1,16 +1,13 @@
 package com.udacity.project4.authentication
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContentProviderCompat.requireContext
-import androidx.navigation.findNavController
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.R
 import com.udacity.project4.databinding.ActivityAuthenticationBinding
@@ -34,14 +31,7 @@ class AuthenticationActivity : AppCompatActivity() {
         setContentView(binding.root)
         Log.d(TAG, "Activity called")
 
-        // TODO: Implement the create account and sign in using FirebaseUI, use sign in using email and sign in using Google
         binding.loginButton.setOnClickListener { launchSignIn() }
-
-        // TODO: If the user was authenticated, send him to RemindersActivity
-
-
-        // TODO: a bonus is to customize the sign in flow to look nice using :
-        //https://github.com/firebase/FirebaseUI-Android/blob/master/auth/README.md#custom-layout
 
     }
 
@@ -56,6 +46,7 @@ class AuthenticationActivity : AppCompatActivity() {
         val signInIntent = AuthUI.getInstance()
             .createSignInIntentBuilder()
             .setAvailableProviders(providers)
+            .setTheme(R.style.AppTheme)
             .build()
         signInLauncher.launch(signInIntent)
     }
@@ -67,11 +58,11 @@ class AuthenticationActivity : AppCompatActivity() {
     }
 
     private fun onSignInResult(result: FirebaseAuthUIAuthenticationResult) {
-        val response = result.idpResponse
-        if (result.resultCode == Activity.RESULT_OK) {
+        // val response = result.idpResponse
+        if (result.resultCode == RESULT_OK) {
             // Successfully signed in
-            val user = FirebaseAuth.getInstance().currentUser
-            Log.i(TAG, "Successfully signed in user ${user}!")
+            // val user = FirebaseAuth.getInstance().currentUser
+            // Log.i(TAG, "Successfully signed in user ${user}!")
 
             // navigate to the reminders activity on successful login
             val intent = Intent(this, RemindersActivity::class.java)
@@ -80,10 +71,12 @@ class AuthenticationActivity : AppCompatActivity() {
             // close out this activity
             this.finish()
         } else {
-            // Sign in failed. If response is null the user canceled the
-            // sign-in flow using the back button. Otherwise check
-            // response.getError().getErrorCode() and handle the error.
-            Log.i(TAG, "Sign in unsuccessful ${response?.error?.errorCode}")
+            // Sign in failed.
+            //if (response == null) {
+            Snackbar.make(binding.authCoordinatorLayout, R.string.sign_in_failed, Snackbar.LENGTH_LONG)
+                .show()
+            //}
+
         }
     }
 }

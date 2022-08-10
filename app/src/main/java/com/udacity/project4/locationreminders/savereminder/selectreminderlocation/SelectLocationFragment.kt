@@ -12,7 +12,6 @@ import android.util.Log
 import android.view.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
@@ -30,7 +29,6 @@ import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.hasPermissions
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import com.udacity.project4.utils.shouldShowRequestPermissionRationale
-import com.udacity.project4.utils.showSnackbar
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
 const val PERMISSION_REQUEST_LOCATION = 0
@@ -41,11 +39,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         private const val TAG = "SelectLocationFragment"
         private val permissionsArray = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             arrayOf(
+                Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION
             )
         } else {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
         }
     }
 
@@ -125,12 +127,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     // Register the permissions callback, which handles the user's response to the
-    // system permissions dialog. Save the return value, an instance of
-    // ActivityResultLauncher.
+    // system permissions dialog.
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             val granted = permissions.entries.all {
-                Log.d(TAG, "Permission Result: ${it.key}: ${it.value}")
                 it.value
             }
             if (granted) {
@@ -152,6 +152,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
 
 
+    // TODO: show dialog based on SDK version
+    // API level 30 and higher will have to go towards the settings option directly.
+    // show an explanation before that
+    // For API level 29 and lower, use shouldShowRequestPermissionRationale to determine if
+    // an explanation is required
     @RequiresApi(Build.VERSION_CODES.M)
     private fun requestLocationPermissions() {
         if (hasPermissions(permissionsArray)) {
@@ -161,13 +166,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         // Permission has not been granted and must be requested.
         if (shouldShowRequestPermissionRationale(permissionsArray)) {
             // Provide an additional rationale to the user if the permission was not granted
-            binding.mainLayout.showSnackbar(
+            Snackbar.make(
+                binding.mainLayout,
                 R.string.permission_denied_explanation,
-                Snackbar.LENGTH_INDEFINITE, R.string.ok
-            ) {
+                Snackbar.LENGTH_INDEFINITE
+            ).setAction(R.string.ok) {
                 requestPermissionLauncher.launch(permissionsArray)
-            }
-
+            }.show()
         } else {
             // directly ask for permission
             Log.d(TAG, "Directly asking for permission")
