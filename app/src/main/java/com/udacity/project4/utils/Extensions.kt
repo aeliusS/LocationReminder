@@ -85,7 +85,7 @@ fun Fragment.shouldShowRequestPermissionRationale(permissions: Array<String>): B
 
 // returns true if all of the permissions from the permissions array are granted
 fun Fragment.hasPermissions(permissions: Array<String>): Boolean =
-    permissions.all {
+    permissions.isEmpty() || permissions.all {
         ActivityCompat.checkSelfPermission(
             requireContext(),
             it

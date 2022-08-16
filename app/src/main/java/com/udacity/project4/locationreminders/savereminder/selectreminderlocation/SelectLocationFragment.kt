@@ -3,7 +3,6 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -17,7 +16,6 @@ import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
@@ -37,10 +35,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     companion object {
         private const val TAG = "SelectLocationFragment"
-        private val permissionsArray = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        private val permissionsArray = if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
             arrayOf(
-                Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION
             )
         } else {
@@ -49,6 +47,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             )
         }
+        private val backgroundPermissionArray =
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+                arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            } else {
+                arrayOf()
+            }
     }
 
     //Use Koin to get the view model of the SaveReminder
@@ -74,13 +78,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         // val mapFragment = requireActivity().supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         // mapFragment?.getMapAsync(this)
 
-        for (permission in permissionsArray) {
-            Log.d(TAG, "Permission: $permission")
-        }
-
-        // request runtime permissions if necessary
+        // request runtime permissions if necessary; API level 23 (M) and higher
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestLocationPermissions()
+            requestForegroundLocationPermissions()
         }
         // TODO: zoom to the user location after taking his permission
 
@@ -128,17 +128,22 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     // Register the permissions callback, which handles the user's response to the
     // system permissions dialog.
-    private val requestPermissionLauncher =
+    private val requestPermission =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             val granted = permissions.entries.all {
                 it.value
             }
             if (granted) {
-                Log.d(TAG, "Permissions granted")
+                Log.d(TAG, "Foreground Permissions granted")
+                if (backgroundPermissionArray.isNotEmpty()) {
+                    requestBackgroundLocationPermission()
+                }
             } else {
+                // not all permissions granted
+                Log.d(TAG, "Permissions not granted")
                 Snackbar.make(
                     binding.mainLayout,
-                    R.string.permission_denied_explanation,
+                    R.string.background_permission_denied,
                     Snackbar.LENGTH_INDEFINITE
                 )
                     .setAction(R.string.settings) {
@@ -151,15 +156,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             }
         }
 
-
-    // TODO: show dialog based on SDK version
-    // API level 30 and higher will have to go towards the settings option directly.
-    // show an explanation before that
-    // For API level 29 and lower, use shouldShowRequestPermissionRationale to determine if
-    // an explanation is required
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun requestLocationPermissions() {
-        if (hasPermissions(permissionsArray)) {
+    private fun requestForegroundLocationPermissions() {
+        if (hasPermissions(permissionsArray) && hasPermissions(backgroundPermissionArray)) {
             Log.d(TAG, "Permissions already granted")
             return
         }
@@ -168,10 +167,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             // Provide an additional rationale to the user if the permission was not granted
             Snackbar.make(
                 binding.mainLayout,
-                R.string.permission_denied_explanation,
+                R.string.location_required_error,
                 Snackbar.LENGTH_INDEFINITE
             ).setAction(R.string.ok) {
-                requestPermissionLauncher.launch(permissionsArray)
+                requestPermission.launch(permissionsArray)
             }.show()
         } else {
             // directly ask for permission
@@ -182,8 +181,23 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 Snackbar.LENGTH_SHORT
             ).show()
             // Request the permission.
-            requestPermissionLauncher.launch(permissionsArray)
+            requestPermission.launch(permissionsArray)
         }
+
+    }
+
+    private fun requestBackgroundLocationPermission() {
+        if (hasPermissions(backgroundPermissionArray)) {
+            Log.d(TAG, "Background permissions already granted")
+            return
+        }
+        Snackbar.make(
+            binding.mainLayout,
+            R.string.background_permission_denied,
+            Snackbar.LENGTH_INDEFINITE
+        ).setAction(R.string.ok) {
+            requestPermission.launch(backgroundPermissionArray)
+        }.show()
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
