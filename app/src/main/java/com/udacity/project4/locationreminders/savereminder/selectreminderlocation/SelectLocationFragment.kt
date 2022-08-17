@@ -2,6 +2,7 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -14,8 +15,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
@@ -29,9 +29,7 @@ import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import com.udacity.project4.utils.shouldShowRequestPermissionRationale
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
-const val PERMISSION_REQUEST_LOCATION = 0
-
-class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
+class SelectLocationFragment : BaseFragment(), OnMapReadyCallback, OnMapsSdkInitializedCallback {
 
     companion object {
         private const val TAG = "SelectLocationFragment"
@@ -54,6 +52,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 arrayOf()
             }
     }
+    private lateinit var map: GoogleMap
 
     //Use Koin to get the view model of the SaveReminder
     override val _viewModel: SaveReminderViewModel by sharedViewModel()
@@ -73,10 +72,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         setDisplayHomeAsUpEnabled(true)
 
-        // TODO: add the map setup implementation
         // Get the SupportMapFragment and request notification when the map is ready to be used.
-        // val mapFragment = requireActivity().supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
-        // mapFragment?.getMapAsync(this)
+        // TODO: find which renderer version is used
+        MapsInitializer.initialize(requireContext(), MapsInitializer.Renderer.LATEST, this)
+        val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
+        mapFragment?.getMapAsync(this)
 
         // request runtime permissions if necessary; API level 23 (M) and higher
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -201,12 +201,31 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
-        val sydney = LatLng(-33.852, 151.211)
-        googleMap.addMarker(
-            MarkerOptions()
-                .position(sydney)
-                .title("Marker in Sydney")
-        )
+        map = googleMap
+        Log.d(TAG, "Map ready")
 
+        val sydney = LatLng(-33.852, 151.211)
+        val zoomLevel = 18f
+
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, zoomLevel))
+        map.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
+
+        enableMyLocation()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun enableMyLocation() {
+        if (hasPermissions(permissionsArray)) {
+            map.isMyLocationEnabled = true
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestForegroundLocationPermissions()
+        }
+    }
+
+    override fun onMapsSdkInitialized(renderer: MapsInitializer.Renderer) {
+        when (renderer) {
+            MapsInitializer.Renderer.LATEST -> Log.d(TAG, "The latest version of the renderer is used.")
+            MapsInitializer.Renderer.LEGACY -> Log.d(TAG, "The legacy version of the renderer is used.")
+        }
     }
 }
