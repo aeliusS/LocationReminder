@@ -2,6 +2,9 @@ package com.udacity.project4
 
 import android.app.Application
 import android.os.StrictMode
+import android.util.Log
+import com.google.android.gms.maps.MapsInitializer
+import com.google.android.gms.maps.OnMapsSdkInitializedCallback
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
@@ -9,17 +12,11 @@ import com.udacity.project4.locationreminders.reminderslist.RemindersListViewMod
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
-import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.context.startKoin
-import org.koin.core.module.dsl.bind
-import org.koin.core.module.dsl.createdAtStart
-import org.koin.core.module.dsl.named
-import org.koin.core.module.dsl.singleOf
-import org.koin.dsl.bind
 import org.koin.dsl.module
 
-class MyApp : Application() {
+class MyApp : Application(), OnMapsSdkInitializedCallback {
 
     override fun onCreate() {
         // strict mode
@@ -32,6 +29,8 @@ class MyApp : Application() {
          */
 
         super.onCreate()
+        // TODO: find which renderer version is used
+        MapsInitializer.initialize(this@MyApp, MapsInitializer.Renderer.LATEST, this)
 
         /**
          * use Koin Library as a service locator
@@ -50,6 +49,13 @@ class MyApp : Application() {
             androidContext(this@MyApp)
             androidLogger()
             modules(listOf(myModule))
+        }
+    }
+
+    override fun onMapsSdkInitialized(renderer: MapsInitializer.Renderer) {
+        when (renderer) {
+            MapsInitializer.Renderer.LATEST -> Log.d("MyApp", "The latest version of the renderer is used.")
+            MapsInitializer.Renderer.LEGACY -> Log.d("MyApp", "The legacy version of the renderer is used.")
         }
     }
 }
