@@ -1,6 +1,7 @@
 package com.udacity.project4.locationreminders.savereminder
 
 import android.app.Application
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.PointOfInterest
@@ -20,7 +21,10 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
     val selectedPOI = MutableLiveData<PointOfInterest?>()
     val latitude = MutableLiveData<Double?>()
     val longitude = MutableLiveData<Double?>()
-    val locationPermissionGranted = MutableLiveData<Boolean?>()
+
+    private val _locationPermissionGranted = MutableLiveData<Boolean?>()
+    val locationPermissionGranted : LiveData<Boolean?>
+        get() = _locationPermissionGranted
 
     /**
      * Clear the live data objects to start fresh next time the view model gets called
@@ -79,5 +83,12 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
             return false
         }
         return true
+    }
+
+    /**
+     * update whether location permission has been granted
+     * */
+    fun updateLocationGrantedTo(value: Boolean) {
+        _locationPermissionGranted.value = value
     }
 }

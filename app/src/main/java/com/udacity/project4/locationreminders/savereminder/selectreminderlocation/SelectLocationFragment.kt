@@ -2,7 +2,6 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Resources
 import android.location.Geocoder
@@ -41,6 +40,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         // Keys for storing activity state.
         private const val KEY_CAMERA_POSITION = "CAMERA_POSITION"
         private const val KEY_LOCATION = "LOCATION"
+        private const val DEFAULT_ZOOM = 15f
 
         private val permissionsArray = if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
             arrayOf(
@@ -69,10 +69,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private var cameraPosition: CameraPosition? = null
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
-    // TODO: use these variables
     private val defaultLocation = LatLng(-33.8523341, 151.2106085)
     private var lastKnownLocation: Location? = null
-    private var locationPermissionGranted = false
 
     //Use Koin to get the view model of the SaveReminder
     override val _viewModel: SaveReminderViewModel by sharedViewModel()
@@ -104,7 +102,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment?.getMapAsync(this)
 
+        _viewModel.locationPermissionGranted.observe(viewLifecycleOwner) { updateLocationUI() }
+
         // TODO: call this function after the user confirms on the selected location
+        // use a dialog box or use a snackbar
         onLocationSelected()
 
         return binding.root
@@ -155,22 +156,32 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     // Register the permissions callback, which handles the user's response to the
     // system permissions dialog.
-    private val requestPermission =
+    private val requestPermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             val granted = permissions.entries.all {
                 it.value
             }
+            // check if background location was requested in this map
+            val background = permissions.entries.any {
+                it.key == "android.permission.ACCESS_BACKGROUND_LOCATION"
+            }
             if (granted) {
-                Log.d(TAG, "Foreground Permissions granted")
-                if (backgroundPermissionArray.isNotEmpty()) {
+                Log.d(TAG, "Permissions granted")
+                _viewModel.updateLocationGrantedTo(true)
+                // if background location wasn't already granted
+                if (!background && backgroundPermissionArray.isNotEmpty()) {
                     requestBackgroundLocationPermission()
                 }
             } else {
                 // not all permissions granted
                 Log.d(TAG, "Permissions not granted")
+
+                // if at least foreground location permission was granted, update the live data variable
+                _viewModel.updateLocationGrantedTo(false)
+
                 Snackbar.make(
                     binding.mainLayout,
-                    R.string.background_permission_denied,
+                    if (background) R.string.background_permission_denied else R.string.location_required_error,
                     Snackbar.LENGTH_INDEFINITE
                 )
                     .setAction(R.string.settings) {
@@ -187,6 +198,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private fun requestForegroundLocationPermissions() {
         if (hasPermissions(permissionsArray.plus(backgroundPermissionArray))) {
             Log.d(TAG, "Permissions already granted")
+            _viewModel.updateLocationGrantedTo(true)
             return
         }
         // Permission has not been granted and must be requested.
@@ -197,7 +209,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 R.string.location_required_error,
                 Snackbar.LENGTH_INDEFINITE
             ).setAction(R.string.ok) {
-                requestPermission.launch(permissionsArray)
+                requestPermissions.launch(permissionsArray)
             }.show()
         } else {
             // directly ask for permission
@@ -208,7 +220,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 Snackbar.LENGTH_SHORT
             ).show()
             // Request the permission.
-            requestPermission.launch(permissionsArray)
+            requestPermissions.launch(permissionsArray)
         }
 
     }
@@ -223,7 +235,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             R.string.background_permission_denied,
             Snackbar.LENGTH_INDEFINITE
         ).setAction(R.string.ok) {
-            requestPermission.launch(backgroundPermissionArray)
+            requestPermissions.launch(backgroundPermissionArray)
         }.show()
     }
 
@@ -238,26 +250,38 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             requestForegroundLocationPermissions()
         }
 
+        // setup map interactions
         setMapClick()
-        setMapStyle()
         setPoiClick()
-        enableMyLocation()
+
+        // load style
+        setMapStyle()
+
+        // turn on the my location layer and get current location of the device
+        updateLocationUI()
+        getDeviceLocation()
     }
 
-    @SuppressLint("MissingPermission")
-    private fun enableMyLocation() {
-        if (hasPermissions(permissionsArray)) {
-            map?.isMyLocationEnabled = true
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestForegroundLocationPermissions()
-        }
-    }
-
-    // TODO: finish this function
     private fun updateLocationUI() {
         if (map == null) return
         try {
-
+            if (_viewModel.locationPermissionGranted.value == true) {
+                Log.d(TAG, "Location permission granted")
+                map?.apply {
+                    isMyLocationEnabled = true
+                    uiSettings.isMyLocationButtonEnabled = true
+                }
+            } else {
+                map?.apply {
+                    isMyLocationEnabled = false
+                    uiSettings.isMyLocationButtonEnabled = false
+                }
+                lastKnownLocation = null
+                // request runtime permissions if necessary; API level 23 (M) and higher
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    requestForegroundLocationPermissions()
+                }
+            }
         } catch (e: SecurityException) {
             Log.e("Exception: %s", e.message, e)
         }
@@ -266,10 +290,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private fun setMapClick() {
         map?.setOnMapClickListener { latLng ->
             selectedMarker?.remove()
-            val address = geocoder?.getFromLocation(latLng.latitude, latLng.longitude, 1)
-            val street = if (address?.isNotEmpty() == true) address[0].getAddressLine(0) else getString(R.string.lat_long_snippet)
-            val snippet = String.format(Locale.getDefault(),street)
-
+            val snippet = getStreetAddress(latLng)
             selectedMarker = map?.addMarker(
                 MarkerOptions()
                     .position(latLng)
@@ -279,6 +300,35 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             selectedMarker?.showInfoWindow()
             //map.moveCamera(CameraUpdateFactory.newLatLng(latLng))
         }
+    }
+
+    private fun setPoiClick() {
+        map?.setOnPoiClickListener { poi ->
+            selectedMarker?.remove()
+            val snippet = getStreetAddress(poi.latLng)
+            selectedMarker = map?.addMarker(
+                MarkerOptions()
+                    .position(poi.latLng)
+                    .title(poi.name)
+                    .snippet(snippet)
+            )
+            selectedMarker?.showInfoWindow()
+        }
+    }
+
+    private fun getStreetAddress(latLng: LatLng) : String {
+        val address = geocoder?.getFromLocation(latLng.latitude, latLng.longitude, 1)
+        val street = if (address?.isNotEmpty() == true) {
+            address[0].getAddressLine(0)
+        } else {
+            String.format(
+                Locale.getDefault(),
+                getString(R.string.lat_long_snippet),
+                latLng.latitude,
+                latLng.longitude
+            )
+        }
+        return String.format(Locale.getDefault(),street)
     }
 
     private fun setMapStyle() {
@@ -297,15 +347,30 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
-    private fun setPoiClick() {
-        map?.setOnPoiClickListener { poi ->
-            selectedMarker?.remove()
-            selectedMarker = map?.addMarker(
-                MarkerOptions()
-                    .position(poi.latLng)
-                    .title(poi.name)
-            )
-            selectedMarker?.showInfoWindow()
+    private fun getDeviceLocation() {
+        try {
+            if (_viewModel.locationPermissionGranted.value == true) {
+                val locationResult = fusedLocationProviderClient.lastLocation
+                locationResult.addOnCompleteListener(requireActivity()) { task ->
+                    if (task.isSuccessful) {
+                        // Set the map's camera position to the current location of the device.
+                        lastKnownLocation = task.result
+                        if (lastKnownLocation != null) {
+                            map?.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                                LatLng(lastKnownLocation!!.latitude,
+                                lastKnownLocation!!.longitude), DEFAULT_ZOOM
+                            ))
+                        } else {
+                            Log.d(TAG, "Current location is null. Using defaults.")
+                            Log.e(TAG, "Exception: %s", task.exception)
+                            map?.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_ZOOM))
+                            map?.uiSettings?.isMyLocationButtonEnabled = false
+                        }
+                    }
+                }
+            }
+        } catch (e: SecurityException) {
+            Log.e(TAG + "Exception: %s", e.message, e)
         }
     }
 
