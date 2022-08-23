@@ -106,7 +106,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         // TODO: call this function after the user confirms on the selected location
         // use a dialog box or use a snackbar
-        onLocationSelected()
+        // onLocationSelected()
 
         return binding.root
     }
@@ -123,6 +123,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         //        TODO: When the user confirms on the selected location,
         //         send back the selected location details to the view model
         //         and navigate back to the previous fragment to save the reminder and add the geofence
+        Log.d(TAG, "onLocationSelected called")
     }
 
     private fun setupMenuOptions(menuHost: MenuHost) {
@@ -298,6 +299,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     .snippet(snippet)
             )
             selectedMarker?.showInfoWindow()
+            _viewModel.updateChosenLocation(latLng, snippet)
+            showChooseLocationDialog(snippet)
             //map.moveCamera(CameraUpdateFactory.newLatLng(latLng))
         }
     }
@@ -313,7 +316,22 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     .snippet(snippet)
             )
             selectedMarker?.showInfoWindow()
+            _viewModel.updateChosenLocation(poi.latLng, poi.name)
+            showChooseLocationDialog(poi.name)
         }
+    }
+
+    /**
+     * Show a dialog that asks the user to confirm the location selected
+     * */
+    private fun showChooseLocationDialog(snippet: String) {
+        Snackbar.make(
+            binding.mainLayout,
+            getString(R.string.location_selected_confirmation, snippet),
+            Snackbar.LENGTH_INDEFINITE
+        ).setAction(R.string.ok) {
+            onLocationSelected()
+        }.show()
     }
 
     private fun getStreetAddress(latLng: LatLng) : String {

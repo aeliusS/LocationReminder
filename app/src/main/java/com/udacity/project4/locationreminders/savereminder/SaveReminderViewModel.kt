@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PointOfInterest
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseViewModel
@@ -36,6 +37,8 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
         selectedPOI.value = null
         latitude.value = null
         longitude.value = null
+
+        _locationPermissionGranted.value = null
     }
 
     /**
@@ -90,5 +93,14 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
      * */
     fun updateLocationGrantedTo(value: Boolean) {
         _locationPermissionGranted.value = value
+    }
+
+    /**
+     * update location coordinates
+     * */
+    fun updateChosenLocation(latLng: LatLng, locationString: String) {
+        latitude.value = latLng.latitude
+        longitude.value = latLng.longitude
+        reminderSelectedLocationStr.value = locationString
     }
 }

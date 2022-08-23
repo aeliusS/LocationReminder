@@ -48,4 +48,5 @@
     <string name="sign_in_failed">Sign in failed!</string>
     <string name="ok">OK</string>
     <string name="location_permission_not_available">Permission is not available. Requesting location permission.</string>
+    <string name="location_selected_confirmation">Do you want to choose this location: %1$s ?</string>
 </resources>
