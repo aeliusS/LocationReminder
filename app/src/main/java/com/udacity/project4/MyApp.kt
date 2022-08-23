@@ -14,6 +14,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.context.startKoin
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 class MyApp : Application(), OnMapsSdkInitializedCallback {
@@ -29,7 +30,6 @@ class MyApp : Application(), OnMapsSdkInitializedCallback {
          */
 
         super.onCreate()
-        // TODO: find which renderer version is used
         MapsInitializer.initialize(this@MyApp, MapsInitializer.Renderer.LATEST, this)
 
         /**
@@ -38,9 +38,9 @@ class MyApp : Application(), OnMapsSdkInitializedCallback {
         val myModule = module {
             //Declare a ViewModel - be later inject into Fragment with dedicated injector using by viewModel()
             viewModelOf(::RemindersListViewModel)
-            viewModelOf(::SaveReminderViewModel)
 
             //Declare singleton definitions to be later injected using by inject()
+            singleOf(::SaveReminderViewModel)
             single<ReminderDataSource> { RemindersLocalRepository(get()) }
             single { LocalDB.createRemindersDao(this@MyApp) }
         }

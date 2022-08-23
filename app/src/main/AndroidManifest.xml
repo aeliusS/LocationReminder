@@ -46,9 +46,7 @@
             </intent-filter>
 
         </activity>
-        <receiver
-            android:name=".locationreminders.geofence.GeofenceBroadcastReceiver"
-            android:exported="true" />
+        <receiver android:name=".locationreminders.geofence.GeofenceBroadcastReceiver" />
         <service
             android:name=".locationreminders.geofence.GeofenceTransitionsJobIntentService"
             android:exported="true"

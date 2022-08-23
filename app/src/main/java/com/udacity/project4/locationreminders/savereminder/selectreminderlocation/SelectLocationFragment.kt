@@ -17,6 +17,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.*
@@ -30,6 +31,7 @@ import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.hasPermissions
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import com.udacity.project4.utils.shouldShowRequestPermissionRationale
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import java.util.*
 
@@ -64,7 +66,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private var map: GoogleMap? = null
     private var geocoder: Geocoder? = null
-    private var selectedMarker: Marker? = null
 
     private var cameraPosition: CameraPosition? = null
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -73,7 +74,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private var lastKnownLocation: Location? = null
 
     //Use Koin to get the view model of the SaveReminder
-    override val _viewModel: SaveReminderViewModel by sharedViewModel()
+    override val _viewModel by inject<SaveReminderViewModel>()
     private lateinit var binding: FragmentSelectLocationBinding
 
     override fun onCreateView(
@@ -90,6 +91,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         setDisplayHomeAsUpEnabled(true)
 
+        Log.d(TAG, "Title is ${_viewModel.reminderTitle.value}")
+
         // retrieve location and camera position from saved instance state
         if (savedInstanceState != null) {
             lastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION)
@@ -104,10 +107,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         _viewModel.locationPermissionGranted.observe(viewLifecycleOwner) { updateLocationUI() }
 
-        // TODO: call this function after the user confirms on the selected location
-        // use a dialog box or use a snackbar
-        // onLocationSelected()
-
         return binding.root
     }
 
@@ -120,10 +119,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun onLocationSelected() {
-        //        TODO: When the user confirms on the selected location,
-        //         send back the selected location details to the view model
-        //         and navigate back to the previous fragment to save the reminder and add the geofence
-        Log.d(TAG, "onLocationSelected called")
+        // Log.d(TAG, "onLocationSelected called")
+        findNavController().popBackStack(R.id.saveReminderFragment, false)
     }
 
     private fun setupMenuOptions(menuHost: MenuHost) {
@@ -252,7 +249,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
 
         // setup map interactions
-        setMapClick()
+        // setMapClick() // we only care about point of interest (poi) so leave this function unused
         setPoiClick()
 
         // load style
@@ -290,34 +287,34 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun setMapClick() {
         map?.setOnMapClickListener { latLng ->
-            selectedMarker?.remove()
+            _viewModel.selectedMarker.value?.remove()
             val snippet = getStreetAddress(latLng)
-            selectedMarker = map?.addMarker(
+            _viewModel.selectedMarker.value = map?.addMarker(
                 MarkerOptions()
                     .position(latLng)
                     .title(getString(R.string.dropped_pin))
                     .snippet(snippet)
             )
-            selectedMarker?.showInfoWindow()
+            _viewModel.selectedMarker.value?.showInfoWindow()
             _viewModel.updateChosenLocation(latLng, snippet)
             showChooseLocationDialog(snippet)
-            //map.moveCamera(CameraUpdateFactory.newLatLng(latLng))
         }
     }
 
     private fun setPoiClick() {
         map?.setOnPoiClickListener { poi ->
-            selectedMarker?.remove()
+            _viewModel.selectedMarker.value?.remove()
             val snippet = getStreetAddress(poi.latLng)
-            selectedMarker = map?.addMarker(
+            val title = poi.name.replace("\n"," ")
+            _viewModel.selectedMarker.value = map?.addMarker(
                 MarkerOptions()
                     .position(poi.latLng)
-                    .title(poi.name)
+                    .title(title)
                     .snippet(snippet)
             )
-            selectedMarker?.showInfoWindow()
-            _viewModel.updateChosenLocation(poi.latLng, poi.name)
-            showChooseLocationDialog(poi.name)
+            _viewModel.selectedMarker.value?.showInfoWindow()
+            _viewModel.updateChosenLocation(poi.latLng, title)
+            showChooseLocationDialog(title)
         }
     }
 
