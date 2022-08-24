@@ -90,7 +90,7 @@ dependencies {
     // Java Compatibility
     // implementation "io.insert-koin:koin-android-compat:$koinVersion"
     // Jetpack WorkManager
-    // implementation "io.insert-koin:koin-androidx-workmanager:$koinVersion"
+    implementation "io.insert-koin:koin-androidx-workmanager:$koinVersion"
     // Navigation Graph
     implementation "io.insert-koin:koin-androidx-navigation:$koinVersion"
     // Koin Test features
@@ -142,4 +142,7 @@ dependencies {
     // implementation 'com.google.maps.android:maps-ktx:3.2.1'
 
 
+    // work manager
+    implementation "androidx.work:work-runtime-ktx:$workVersion"
+    // androidTestImplementation "androidx.work:work-testing:$workVersion"
 }

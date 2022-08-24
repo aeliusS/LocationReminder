@@ -75,6 +75,7 @@ class SaveReminderFragment : BaseFragment() {
             val latitude = _viewModel.latitude.value
             val longitude = _viewModel.longitude.value
 
+            // TODO: move validation to the view model layer
             if (title.isNullOrBlank()) {
                 binding.reminderTitle.apply {
                     error = getString(R.string.err_enter_title)
@@ -92,29 +93,21 @@ class SaveReminderFragment : BaseFragment() {
                 return@setOnClickListener
             }
 
-            // TODO: refactor save method with this variable. Use reminder.id as the geofence
-            // request id
             val reminder = ReminderDataItem(title,description,location,latitude,longitude)
 
-//            TODO: use the user entered reminder details to:
-//             1) add a geofencing request
-//             2) save the reminder to the local db
-
-            // TODO: find out if you can have multiple geofence created for the same location string
-            // if not, save first, get id, and then use the id as the request key
-            addGeofenceAndSaveReminder()
+            addGeofenceAndSaveReminder(reminder)
         }
     }
 
     @SuppressLint("MissingPermission")
-    private fun addGeofenceAndSaveReminder() {
+    private fun addGeofenceAndSaveReminder(reminderDataItem: ReminderDataItem) {
         if (geofencingClient == null) geofencingClient =
             LocationServices.getGeofencingClient(requireActivity())
         val geofence = Geofence.Builder()
-            .setRequestId(_viewModel.reminderSelectedLocationStr.value!!)
+            .setRequestId(reminderDataItem.id)
             .setCircularRegion(
-                _viewModel.latitude.value!!,
-                _viewModel.longitude.value!!,
+                reminderDataItem.latitude!!,
+                reminderDataItem.longitude!!,
                 GeofencingConstants.GEOFENCE_RADIUS_IN_METERS
             )
             .setExpirationDuration(GeofencingConstants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
@@ -122,14 +115,14 @@ class SaveReminderFragment : BaseFragment() {
             .build()
 
         val geofenceRequest = GeofencingRequest.Builder().apply {
-            setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER or GeofencingRequest.INITIAL_TRIGGER_DWELL)
+            setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
             addGeofence(geofence)
         }.build()
 
         geofencingClient?.addGeofences(geofenceRequest, geofencePendingIntent)?.run {
             addOnSuccessListener {
                 Log.d(TAG, "Geofence added for ${geofence.requestId}")
-                saveReminder()
+                _viewModel.validateAndSaveReminder(reminderDataItem)
             }
             addOnFailureListener {
                 Log.d(TAG, "Couldn't add geofence for ${geofence.requestId}")
@@ -140,16 +133,6 @@ class SaveReminderFragment : BaseFragment() {
                 ).show()
             }
         }
-    }
-
-    private fun saveReminder() {
-        _viewModel.saveReminder(ReminderDataItem(
-            _viewModel.reminderTitle.value,
-            _viewModel.reminderDescription.value,
-            _viewModel.reminderSelectedLocationStr.value,
-            _viewModel.latitude.value,
-            _viewModel.longitude.value
-        ))
     }
 
     override fun onDestroy() {

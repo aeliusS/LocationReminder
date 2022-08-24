@@ -10,9 +10,12 @@ import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
+import com.udacity.project4.locationreminders.workers.GeofenceNotificationWorker
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.koin.androidx.workmanager.dsl.worker
+import org.koin.androidx.workmanager.koin.workManagerFactory
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -43,11 +46,15 @@ class MyApp : Application(), OnMapsSdkInitializedCallback {
             singleOf(::SaveReminderViewModel)
             single<ReminderDataSource> { RemindersLocalRepository(get()) }
             single { LocalDB.createRemindersDao(this@MyApp) }
+
+            // worker definition
+            worker { GeofenceNotificationWorker(get(), get()) }
         }
 
         startKoin {
             androidContext(this@MyApp)
             androidLogger()
+            workManagerFactory()
             modules(listOf(myModule))
         }
     }

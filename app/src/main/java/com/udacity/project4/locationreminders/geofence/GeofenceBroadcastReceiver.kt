@@ -3,6 +3,14 @@ package com.udacity.project4.locationreminders.geofence
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import com.google.android.gms.location.Geofence
+import com.google.android.gms.location.GeofencingEvent
+import com.udacity.project4.locationreminders.workers.GeofenceNotificationWorker
+import com.udacity.project4.locationreminders.workers.GeofenceNotificationWorker.Companion.KEY_REMINDER_ID
 
 /**
  * Triggered by the Geofence.  Since we can have many Geofences at once, we pull the request
@@ -15,9 +23,51 @@ import android.content.Intent
  */
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
+
+    companion object {
+        private const val TAG = "GeoBroadcastReceiver"
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         // TODO: implement the onReceive method to receive the geofencing events at the background
         // this class will take care of sending notifications to the user using sendNotification()
+        Log.d(TAG, "Received geofence event 1")
+        Log.d(TAG, "Unrelated event is ${intent.action}")
+        if (intent.action == GeofencingConstants.ACTION_GEOFENCE_EVENT) {
+            val geofencingEvent = GeofencingEvent.fromIntent(intent) ?: return
+            Log.d(TAG, "Received geofence event")
 
+            if (geofencingEvent.hasError()) {
+                val errorMessage = errorMessage(context, geofencingEvent.errorCode)
+                Log.e(TAG, errorMessage)
+                return
+            }
+
+            // get the transition type
+            val geofenceTransition = geofencingEvent.geofenceTransition
+            if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
+                Log.v(TAG, "Geofence entered")
+                val reminderId = when {
+                    geofencingEvent.triggeringGeofences?.isNotEmpty() == true ->
+                        geofencingEvent.triggeringGeofences!![0].requestId
+                    else -> {
+                        Log.e(TAG, "No Geofence Trigger Found! Abort mission!")
+                        return
+                    }
+                }
+                sendWorkerNotification(context, reminderId)
+            } else {
+                Log.d(TAG, "Geofence transition event: $geofenceTransition")
+            }
+        } else {
+            Log.d(TAG, "Unrelated event is ${intent.action}")
+        }
+    }
+
+    private fun sendWorkerNotification(context: Context, reminderId: String) {
+        val oneTimeNotification = OneTimeWorkRequestBuilder<GeofenceNotificationWorker>()
+            .setInputData(workDataOf(Pair(KEY_REMINDER_ID, reminderId)))
+            .build()
+        WorkManager.getInstance(context).enqueue(oneTimeNotification)
     }
 }
