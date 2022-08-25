@@ -48,7 +48,7 @@ class MyApp : Application(), OnMapsSdkInitializedCallback {
             single { LocalDB.createRemindersDao(this@MyApp) }
 
             // worker definition
-            worker { GeofenceNotificationWorker(get(), get()) }
+            worker { GeofenceNotificationWorker(get(), get(), get()) }
         }
 
         startKoin {

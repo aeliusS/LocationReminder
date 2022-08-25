@@ -64,7 +64,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
     private fun sendWorkerNotification(context: Context, reminderId: String) {
         val oneTimeNotification = OneTimeWorkRequestBuilder<GeofenceNotificationWorker>()
-            .setInputData(workDataOf(Pair(KEY_REMINDER_ID, reminderId)))
+            .setInputData(workDataOf(KEY_REMINDER_ID to reminderId))
             .build()
         WorkManager.getInstance(context).enqueue(oneTimeNotification)
     }

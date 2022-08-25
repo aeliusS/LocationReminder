@@ -48,7 +48,7 @@
 
             <TextView
                 android:id="@+id/selectLocation"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
@@ -63,13 +63,16 @@
 
             <TextView
                 android:id="@+id/selectedLocation"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
                 android:layout_marginEnd="@dimen/margin_normal"
+                android:gravity="end"
                 android:text="@{viewModel.reminderSelectedLocationStr}"
                 android:textColor="@color/black"
                 app:layout_constraintBottom_toBottomOf="@id/selectLocation"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/selectLocation"
                 app:layout_constraintTop_toTopOf="@id/selectLocation"
                 tools:text="Location" />
 
