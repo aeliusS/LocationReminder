@@ -2,6 +2,7 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.res.Resources
 import android.location.Geocoder
@@ -12,14 +13,19 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.*
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
+import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import com.google.android.material.snackbar.Snackbar
@@ -32,13 +38,14 @@ import com.udacity.project4.utils.hasPermissions
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import com.udacity.project4.utils.shouldShowRequestPermissionRationale
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import java.util.*
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     companion object {
-        private val TAG = SelectLocationFragment::class.java.simpleName
+        private const val TAG = "SelectLocationFragment"
+        private const val REQUEST_TURN_DEVICE_LOCATION_ON = 0
+
         // Keys for storing activity state.
         private const val KEY_CAMERA_POSITION = "CAMERA_POSITION"
         private const val KEY_LOCATION = "LOCATION"
@@ -99,7 +106,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             cameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION)
         }
 
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        fusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(requireActivity())
 
         // Get the SupportMapFragment and request notification when the map is ready to be used.
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
@@ -179,7 +187,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
                 Snackbar.make(
                     binding.mainLayout,
-                    if (background) R.string.background_permission_denied else R.string.location_required_error,
+                    if (background) R.string.background_permission_denied else R.string.precise_location_permission_denied,
                     Snackbar.LENGTH_INDEFINITE
                 )
                     .setAction(R.string.settings) {
@@ -249,7 +257,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
 
         // setup map interactions
-        // setMapClick() // we only care about point of interest (poi) so leave this function unused
+        setMapClick() // we only care about point of interest (poi) so leave this function unused
         setPoiClick()
 
         // load style
@@ -257,7 +265,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         // turn on the my location layer and get current location of the device
         updateLocationUI()
-        getDeviceLocation()
+        checkDeviceLocationSettingsAndGetLocation()
     }
 
     private fun updateLocationUI() {
@@ -281,7 +289,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 }
             }
         } catch (e: SecurityException) {
-            Log.e("Exception: %s", e.message, e)
+            Log.e(TAG, "updateLocationUI exception: $e.message")
         }
     }
 
@@ -305,7 +313,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         map?.setOnPoiClickListener { poi ->
             _viewModel.selectedMarker.value?.remove()
             val snippet = getStreetAddress(poi.latLng)
-            val title = poi.name.replace("\n"," ")
+            val title = poi.name.replace("\n", " ")
             _viewModel.selectedMarker.value = map?.addMarker(
                 MarkerOptions()
                     .position(poi.latLng)
@@ -331,7 +339,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }.show()
     }
 
-    private fun getStreetAddress(latLng: LatLng) : String {
+    private fun getStreetAddress(latLng: LatLng): String {
         val address = geocoder?.getFromLocation(latLng.latitude, latLng.longitude, 1)
         val street = if (address?.isNotEmpty() == true) {
             address[0].getAddressLine(0)
@@ -343,7 +351,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 latLng.longitude
             )
         }
-        return String.format(Locale.getDefault(),street)
+        return String.format(Locale.getDefault(), street)
     }
 
     private fun setMapStyle() {
@@ -371,22 +379,81 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                         // Set the map's camera position to the current location of the device.
                         lastKnownLocation = task.result
                         if (lastKnownLocation != null) {
-                            map?.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                                LatLng(lastKnownLocation!!.latitude,
-                                lastKnownLocation!!.longitude), DEFAULT_ZOOM
-                            ))
+                            map?.moveCamera(
+                                CameraUpdateFactory.newLatLngZoom(
+                                    LatLng(
+                                        lastKnownLocation!!.latitude,
+                                        lastKnownLocation!!.longitude
+                                    ), DEFAULT_ZOOM
+                                )
+                            )
                         } else {
-                            Log.d(TAG, "Current location is null. Using defaults.")
-                            Log.e(TAG, "Exception: %s", task.exception)
-                            map?.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_ZOOM))
-                            map?.uiSettings?.isMyLocationButtonEnabled = false
+                            Log.d(TAG, "Last known location is null. Using defaults.")
+                            map?.moveCamera(
+                                CameraUpdateFactory.newLatLngZoom(
+                                    defaultLocation,
+                                    DEFAULT_ZOOM
+                                )
+                            )
+                            // map?.uiSettings?.isMyLocationButtonEnabled = false
                         }
                     }
                 }
             }
         } catch (e: SecurityException) {
-            Log.e(TAG + "Exception: %s", e.message, e)
+            Log.e(TAG, "getDeviceLocation failed: ${e.message}")
         }
+    }
+
+    private fun checkDeviceLocationSettingsAndGetLocation(resolve: Boolean = true) {
+        val locationRequest = LocationRequest.create().apply {
+            priority = Priority.PRIORITY_LOW_POWER
+        }
+        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+
+        val settingsClient = LocationServices.getSettingsClient(requireActivity())
+        val locationSettingsResponseTask = settingsClient.checkLocationSettings(builder.build())
+        locationSettingsResponseTask.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException && resolve) {
+                try {
+                    val intentSenderRequest = IntentSenderRequest
+                        .Builder(exception.resolution).build()
+                    resolutionForResult.launch(intentSenderRequest)
+                } catch (e: Exception) {
+                    Log.d(TAG, "Error getting location settings resolution: " + e.message)
+                }
+            } else {
+                displayTurnLocationOnError()
+            }
+        }
+        locationSettingsResponseTask.addOnSuccessListener {
+            Log.d(TAG, "Location is turned on")
+            _viewModel.updateLocationGrantedTo(true)
+            getDeviceLocation()
+        }
+    }
+
+    private val resolutionForResult = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { activityResult ->
+        Log.d(TAG, "Activity Result code: ${activityResult.resultCode}")
+        if (activityResult.resultCode == Activity.RESULT_OK) {
+            checkDeviceLocationSettingsAndGetLocation(false)
+        } else {
+            displayTurnLocationOnError()
+        }
+    }
+
+    private fun displayTurnLocationOnError() {
+        _viewModel.updateLocationGrantedTo(false)
+        Snackbar.make(
+            binding.mainLayout,
+            R.string.location_required_error,
+            Snackbar.LENGTH_INDEFINITE
+        )
+            .setAction(R.string.ok) {
+                checkDeviceLocationSettingsAndGetLocation()
+            }.show()
     }
 
     @RequiresApi(Build.VERSION_CODES.M)

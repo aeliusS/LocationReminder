@@ -25,7 +25,7 @@ fun errorMessage(context: Context, errorCode: Int): String {
 }
 
 internal object GeofencingConstants {
-    const val GEOFENCE_RADIUS_IN_METERS = 1000f
+    const val GEOFENCE_RADIUS_IN_METERS = 50f
     const val ACTION_GEOFENCE_EVENT = "SaveReminderFragment.action.ACTION_GEOFENCE_EVENT"
     val GEOFENCE_EXPIRATION_IN_MILLISECONDS: Long = TimeUnit.DAYS.toMillis(1)
 }

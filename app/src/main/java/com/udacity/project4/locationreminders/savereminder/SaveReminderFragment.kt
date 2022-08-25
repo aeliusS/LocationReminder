@@ -20,6 +20,7 @@ import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSaveReminderBinding
 import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.geofence.GeofencingConstants
+import com.udacity.project4.locationreminders.geofence.GeofencingConstants.ACTION_GEOFENCE_EVENT
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
@@ -37,12 +38,12 @@ class SaveReminderFragment : BaseFragment() {
 
     // A PendingIntent for the Broadcast Receiver that handles geofence transitions.
     private val geofencePendingIntent: PendingIntent by lazy {
-        val intent = Intent(requireContext(), GeofenceBroadcastReceiver::class.java)
-        intent.action = GeofencingConstants.ACTION_GEOFENCE_EVENT
+        val intent = Intent(context, GeofenceBroadcastReceiver::class.java)
+        intent.action = ACTION_GEOFENCE_EVENT
         val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         } else PendingIntent.FLAG_UPDATE_CURRENT
-        PendingIntent.getBroadcast(requireContext(), 0, intent, flags)
+        PendingIntent.getBroadcast(context, 0, intent, flags)
     }
 
     override fun onCreateView(
@@ -95,6 +96,9 @@ class SaveReminderFragment : BaseFragment() {
 
             val reminder = ReminderDataItem(title,description,location,latitude,longitude)
 
+            // TODO: remove after testing
+            removeGeofencesAndReminders()
+
             addGeofenceAndSaveReminder(reminder)
         }
     }
@@ -133,6 +137,15 @@ class SaveReminderFragment : BaseFragment() {
                 ).show()
             }
         }
+    }
+
+    // used for testing
+    private fun removeGeofencesAndReminders() {
+        if (geofencingClient == null) geofencingClient =
+            LocationServices.getGeofencingClient(requireActivity())
+
+        geofencingClient?.removeGeofences(geofencePendingIntent)
+        _viewModel.removeReminders()
     }
 
     override fun onDestroy() {

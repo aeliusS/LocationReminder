@@ -107,4 +107,13 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
         longitude.value = latLng.longitude
         reminderSelectedLocationStr.value = locationString
     }
+
+    /**
+     * Temporary
+     * */
+    fun removeReminders() {
+        viewModelScope.launch {
+            dataSource.deleteAllReminders()
+        }
+    }
 }
