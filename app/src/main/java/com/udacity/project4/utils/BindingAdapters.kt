@@ -44,4 +44,18 @@ object BindingAdapters {
             }
         }
     }
+
+    /**
+     * Use this binding adapter to show and hide the views using string variables
+     */
+    @BindingAdapter("android:viewVisibility")
+    @JvmStatic
+    fun setViewVisibility(view: View, data: String? = "") {
+        if (data.isNullOrBlank()) {
+            if (view.visibility == View.VISIBLE) view.visibility = View.GONE
+        } else {
+            // description provided. display the view
+            if (view.visibility == View.GONE) view.visibility = View.VISIBLE
+        }
+    }
 }

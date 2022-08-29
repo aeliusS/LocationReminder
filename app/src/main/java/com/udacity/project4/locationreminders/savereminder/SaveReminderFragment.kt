@@ -43,7 +43,7 @@ class SaveReminderFragment : BaseFragment() {
         val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         } else PendingIntent.FLAG_UPDATE_CURRENT
-        PendingIntent.getBroadcast(context, 0, intent, flags)
+        PendingIntent.getBroadcast(context, 1, intent, flags)
     }
 
     override fun onCreateView(

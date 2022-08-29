@@ -44,7 +44,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     companion object {
         private const val TAG = "SelectLocationFragment"
-        private const val REQUEST_TURN_DEVICE_LOCATION_ON = 0
 
         // Keys for storing activity state.
         private const val KEY_CAMERA_POSITION = "CAMERA_POSITION"
@@ -249,7 +248,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         map = googleMap
         Log.d(TAG, "Map ready")
 
-        geocoder = Geocoder(requireContext(), Locale.getDefault())
+        geocoder = Geocoder(context, Locale.getDefault())
 
         // request runtime permissions if necessary; API level 23 (M) and higher
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -329,6 +328,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     /**
      * Show a dialog that asks the user to confirm the location selected
      * */
+    // TODO: Make this a button
     private fun showChooseLocationDialog(snippet: String) {
         Snackbar.make(
             binding.mainLayout,
@@ -340,6 +340,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun getStreetAddress(latLng: LatLng): String {
+
+        // current geocoder.getFromLocation is deprecated. only freezes up the main thread
+        /*
         val address = geocoder?.getFromLocation(latLng.latitude, latLng.longitude, 1)
         val street = if (address?.isNotEmpty() == true) {
             address[0].getAddressLine(0)
@@ -351,6 +354,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 latLng.longitude
             )
         }
+        */
+        val street = String.format(
+            Locale.getDefault(),
+            getString(R.string.lat_long_snippet),
+            latLng.latitude,
+            latLng.longitude
+        )
         return String.format(Locale.getDefault(), street)
     }
 

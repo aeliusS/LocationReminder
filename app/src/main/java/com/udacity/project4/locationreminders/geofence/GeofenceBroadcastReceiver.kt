@@ -30,36 +30,36 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        // TODO: implement the onReceive method to receive the geofencing events at the background
-        // this class will take care of sending notifications to the user using sendNotification()
-            if (intent.action == ACTION_GEOFENCE_EVENT) {
-                Log.d(TAG, "Made it past if statement")
-                val geofencingEvent = GeofencingEvent.fromIntent(intent)
-                Log.d(TAG, "Received geofence event. Is null? : ${geofencingEvent == null}")
-
-                if (geofencingEvent?.hasError() == true) {
-                    val errorMessage = errorMessage(context, geofencingEvent.errorCode)
-                    Log.e(TAG, errorMessage)
-                    return
-                }
-
-                // get the transition type
-                val geofenceTransition = geofencingEvent?.geofenceTransition
-                if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
-                    Log.v(TAG, "Geofence entered")
-                    val reminderId = when {
-                        geofencingEvent.triggeringGeofences?.isNotEmpty() == true ->
-                            geofencingEvent.triggeringGeofences!![0].requestId
-                        else -> {
-                            Log.e(TAG, "No Geofence Trigger Found! Abort mission!")
-                            return
-                        }
-                    }
-                    sendWorkerNotification(context, reminderId)
-                } else {
-                    Log.d(TAG, "Geofence transition event: $geofenceTransition")
-                }
+        if (intent.action == ACTION_GEOFENCE_EVENT) {
+            val geofencingEvent = GeofencingEvent.fromIntent(intent)
+            if (geofencingEvent == null) {
+                Log.d(TAG, "Received null geofence event")
+                return
             }
+
+            if (geofencingEvent.hasError()) {
+                val errorMessage = errorMessage(context, geofencingEvent.errorCode)
+                Log.e(TAG, errorMessage)
+                return
+            }
+
+            // get the transition type
+            val geofenceTransition = geofencingEvent.geofenceTransition
+            if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
+                Log.v(TAG, "Geofence entered")
+                val reminderId = when {
+                    geofencingEvent.triggeringGeofences?.isNotEmpty() == true ->
+                        geofencingEvent.triggeringGeofences!![0].requestId
+                    else -> {
+                        Log.e(TAG, "No Geofence Trigger Found! Abort mission!")
+                        return
+                    }
+                }
+                sendWorkerNotification(context, reminderId)
+            } else {
+                Log.d(TAG, "Geofence transition event: $geofenceTransition")
+            }
+        }
     }
 
     private fun sendWorkerNotification(context: Context, reminderId: String) {
