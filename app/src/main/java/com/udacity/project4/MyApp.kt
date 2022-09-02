@@ -55,14 +55,14 @@ class MyApp : Application(), OnMapsSdkInitializedCallback {
             single(named("IODispatcher")) {
                 Dispatchers.IO
             }
-            worker { GeofenceNotificationWorker(get(), get(), get(), get(named("IODispatcher"))) }
+            single { GeofenceNotificationWorker(get(), get(), get(), get(named("IODispatcher"))) }
             // workerOf(::GeofenceNotificationWorker)
         }
 
         startKoin {
             androidContext(this@MyApp)
             androidLogger()
-            workManagerFactory()
+            // workManagerFactory()
             modules(listOf(myModule))
         }
     }
