@@ -18,13 +18,14 @@ import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.androidx.workmanager.dsl.worker
 import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.androidx.workmanager.koin.workManagerFactory
+import org.koin.core.component.KoinComponent
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.dsl.single
 
-class MyApp : Application(), OnMapsSdkInitializedCallback {
+class MyApp : Application(), OnMapsSdkInitializedCallback, KoinComponent {
 
     override fun onCreate() {
         // strict mode
@@ -55,14 +56,15 @@ class MyApp : Application(), OnMapsSdkInitializedCallback {
             single(named("IODispatcher")) {
                 Dispatchers.IO
             }
-            single { GeofenceNotificationWorker(get(), get(), get(), get(named("IODispatcher"))) }
+            // TODO: comment out the line below for testing
+            // worker { GeofenceNotificationWorker(get(), get(), get(), get(named("IODispatcher"))) }
             // workerOf(::GeofenceNotificationWorker)
         }
 
         startKoin {
             androidContext(this@MyApp)
             androidLogger()
-            // workManagerFactory()
+            // workManagerFactory() // TODO: comment this out for testing
             modules(listOf(myModule))
         }
     }

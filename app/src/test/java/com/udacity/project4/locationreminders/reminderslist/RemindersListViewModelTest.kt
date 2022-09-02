@@ -7,6 +7,8 @@ import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.getOrAwaitValue
+import com.udacity.project4.locationreminders.workers.GeofenceNotificationWorker
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -24,24 +26,22 @@ import kotlin.test.assertNotNull
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.MatcherAssert.assertThat
 import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.workmanager.dsl.worker
+import org.koin.androidx.workmanager.koin.workManagerFactory
 import org.koin.core.context.stopKoin
 import org.koin.core.context.unloadKoinModules
 import org.koin.core.module.Module
+import org.koin.core.qualifier.named
 
 @RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
 class RemindersListViewModelTest : KoinTest {
-
-    //TODO: provide testing to the RemindersListViewModel and its live data objects
 
     // subject under test
     private lateinit var remindersListViewModel: RemindersListViewModel
 
     // use a fake repository to be injected into the ViewModel
     private lateinit var dataSource: FakeDataSource
-
-    // koin module
-    private lateinit var module: Module
 
     @Before
     fun setupViewModel() {
@@ -52,7 +52,7 @@ class RemindersListViewModelTest : KoinTest {
         val reminder3 = ReminderDTO("Title3", "Description3", "Sydney", 1.0, 2.0)
         dataSource.addReminders(reminder1, reminder2, reminder3)
 
-        module = module {
+        val module = module {
             single { RemindersListViewModel(get(), dataSource) }
         }
 
@@ -99,9 +99,11 @@ class RemindersListViewModelTest : KoinTest {
         // now let the coroutine finish before continuing
         advanceUntilIdle()
 
-        // the reminderList will not be null
+        // then the reminderList will not be null
         val value = remindersListViewModel.remindersList.getOrAwaitValue()
         assertThat(value, (not(nullValue())))
     }
+
+    // TODO: add case for error set to true
 
 }
