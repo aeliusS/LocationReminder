@@ -15,14 +15,17 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import org.koin.core.qualifier.named
 
 class GeofenceNotificationWorker(
     appContext: Context,
     workerParameters: WorkerParameters,
     private val dataSource: ReminderDataSource,
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.IO
-) :
-    CoroutineWorker(appContext, workerParameters) {
+) : CoroutineWorker(appContext, workerParameters), KoinComponent {
+
+    private val defaultDispatcher: CoroutineDispatcher by inject(named("IODispatcher"))
 
     override suspend fun doWork(): Result = withContext(defaultDispatcher) {
         try {

@@ -1,14 +1,11 @@
 package com.udacity.project4.locationreminders.reminderslist
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.udacity.project4.locationreminders.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.FakeDataSource
-import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.getOrAwaitValue
-import com.udacity.project4.locationreminders.workers.GeofenceNotificationWorker
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -18,20 +15,13 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.loadKoinModules
-import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import org.koin.test.KoinTest
 import org.koin.test.get
 import kotlin.test.assertNotNull
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.MatcherAssert.assertThat
-import org.koin.android.ext.koin.androidContext
-import org.koin.androidx.workmanager.dsl.worker
-import org.koin.androidx.workmanager.koin.workManagerFactory
 import org.koin.core.context.stopKoin
-import org.koin.core.context.unloadKoinModules
-import org.koin.core.module.Module
-import org.koin.core.qualifier.named
 
 @RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
@@ -43,8 +33,15 @@ class RemindersListViewModelTest : KoinTest {
     // use a fake repository to be injected into the ViewModel
     private lateinit var dataSource: FakeDataSource
 
+    // this makes the test run sequentially, which is important for testing LiveData variables
+    @get:Rule
+    var instantExecutorRule = InstantTaskExecutorRule()
+
+    @get:Rule
+    var mainCoroutineRule = MainCoroutineRule()
+
     @Before
-    fun setupViewModel() {
+    fun setupRepositoryAndViewModel() {
         // initialize the datasource with 3 reminders
         dataSource = FakeDataSource()
         val reminder1 = ReminderDTO("Title1", "Description1", "Sydney", 1.0, 2.0)
@@ -55,13 +52,9 @@ class RemindersListViewModelTest : KoinTest {
         val module = module {
             single { RemindersListViewModel(get(), dataSource) }
         }
+        loadKoinModules(module)
 
-        stopKoin()
-        startKoin {
-            androidContext(ApplicationProvider.getApplicationContext())
-            modules(module)
-        }
-        // loadKoinModules(module)
+        remindersListViewModel = get()
     }
 
     @After
@@ -70,40 +63,63 @@ class RemindersListViewModelTest : KoinTest {
         stopKoin()
     }
 
-    // this makes the test run sequentially, which is important for testing LiveData variables
-    @get:Rule
-    var instantExecutorRule = InstantTaskExecutorRule()
+//    @get:Rule
+//    val koinTestRule = KoinTestRule.create {
+//        modules(module {
+//            single { RemindersListViewModel(get(), dataSource) }
+//        })
+//    }
+
 
     @Test
     fun loadReminders_showLoading() = runTest {
         // verify that Koin loaded the view model
-        remindersListViewModel = get()
         assertNotNull(remindersListViewModel)
 
-        // load the reminders in the view model
+        // when the reminders are loaded into the view model
         remindersListViewModel.loadReminders()
 
+        // then showLoading will be set to true
+        assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), `is`(true))
         // now let the coroutine finish before continuing
         advanceUntilIdle()
 
         // then the showLoading is set to false
-        assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), `is`(false) )
+        assertThat(remindersListViewModel.showLoading.getOrAwaitValue(), `is`(false))
     }
 
     @Test
     fun loadReminders_reminderListLoaded() = runTest {
-        // load the reminders in the view model
-        remindersListViewModel = get()
-        remindersListViewModel.loadReminders()
+        // given the remindersListViewModel
+        assertNotNull(remindersListViewModel)
 
+        // when the reminders are loaded into the view model
+        remindersListViewModel.loadReminders()
         // now let the coroutine finish before continuing
         advanceUntilIdle()
 
-        // then the reminderList will not be null
-        val value = remindersListViewModel.remindersList.getOrAwaitValue()
-        assertThat(value, (not(nullValue())))
+        // then the reminderList will not be empty
+        val remindersList = remindersListViewModel.remindersList.getOrAwaitValue()
+        val showNoData = remindersListViewModel.showNoData.getOrAwaitValue()
+        assertThat(remindersList.isEmpty(), `is`(false))
+        assertThat(showNoData, `is`(false))
     }
 
-    // TODO: add case for error set to true
+    @Test
+    fun loadReminders_showError() = runTest {
+        // given the remindersListViewModel and returnError set to true
+        assertNotNull(remindersListViewModel)
+        dataSource.setReturnError(true)
+
+        // when the reminders are loaded into the view model
+        remindersListViewModel.loadReminders()
+        advanceUntilIdle()
+
+        // it should set the error values
+        val showSnackBar = remindersListViewModel.showSnackBar.getOrAwaitValue()
+        val showNoData = remindersListViewModel.showNoData.getOrAwaitValue()
+        assertThat(showSnackBar.isNullOrBlank(), `is`(false))
+        assertThat(showNoData, `is`(true))
+    }
 
 }
