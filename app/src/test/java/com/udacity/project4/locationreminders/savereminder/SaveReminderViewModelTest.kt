@@ -5,9 +5,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.udacity.project4.locationreminders.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
+import com.udacity.project4.locationreminders.data.dto.Result
 import com.udacity.project4.locationreminders.getOrAwaitValue
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import com.udacity.project4.R
+import com.udacity.project4.locationreminders.reminderslist.asReminderDTO
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -112,6 +114,18 @@ class SaveReminderViewModelTest : KoinTest {
         assertThat(saveReminderViewModel.showLoading.getOrAwaitValue(), `is`(false))
     }
 
-    // TODO: check saved reminder test
+    @Test
+    fun saveValidReminder_returnsSameObject() = runTest {
+        // given a valid reminder
+        val reminder = ReminderDataItem("Test", "", "Google", 0.0, 0.0)
 
+        // when saving the valid reminder
+        saveReminderViewModel.validateAndSaveReminder(reminder)
+        advanceUntilIdle()
+
+        // then the reminder is saved into the datasource
+        val result = dataSource.getReminder(reminder.id)
+        val match = Result.Success(reminder.asReminderDTO())
+        assertThat(result, equalTo(match))
+    }
 }
