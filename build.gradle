@@ -2,7 +2,7 @@
 
 buildscript {
     ext.kotlinVersion = '1.7.10'
-    ext.navigationVersion = '2.5.1'
+    ext.navigationVersion = '2.5.2'
 
     repositories {
         google()
@@ -41,7 +41,7 @@ ext {
     materialVersion = '1.6.1'
     fragmentVersion = '1.5.2'
     recyclerViewVersion = '1.2.1'
-    mockitoVersion = '4.7.0'
+    mockitoVersion = '4.8.0'
     constraintVersion = '2.2.0-alpha03'
     dexMakerVersion = '2.28.3'
     coroutinesVersion = '1.6.4'
