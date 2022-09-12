@@ -121,6 +121,7 @@ dependencies {
     androidTestImplementation "androidx.test:core-ktx:$androidXTestCoreVersion"
     androidTestImplementation "androidx.test.ext:junit-ktx:$androidXTestExtKotlinRunnerVersion"
     androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion"
+    androidTestImplementation "androidx.test:runner:$androidXTestRulesVersion"
     androidTestImplementation "androidx.test:rules:$androidXTestRulesVersion"
     androidTestImplementation "androidx.room:room-testing:$roomVersion"
     androidTestImplementation "androidx.arch.core:core-testing:$archTestingVersion"

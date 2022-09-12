@@ -3,6 +3,7 @@ package com.udacity.project4.authentication
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
@@ -29,10 +30,28 @@ class AuthenticationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityAuthenticationBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        Log.d(TAG, "Activity called")
+
+        Log.d(TAG, "Called")
 
         binding.loginButton.setOnClickListener { launchSignIn() }
 
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (FirebaseAuth.getInstance().currentUser != null) {
+                    navigateToRemindersActivity()
+                } else {
+                    finish()
+                }
+            }
+        })
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (FirebaseAuth.getInstance().currentUser != null) {
+            navigateToRemindersActivity()
+        }
     }
 
     private fun launchSignIn() {
@@ -57,26 +76,21 @@ class AuthenticationActivity : AppCompatActivity() {
         this.onSignInResult(res)
     }
 
+    private fun navigateToRemindersActivity() {
+        val intent = Intent(this, RemindersActivity::class.java)
+        startActivity(intent)
+        // close out this activity
+        this.finish()
+    }
+
     private fun onSignInResult(result: FirebaseAuthUIAuthenticationResult) {
         // val response = result.idpResponse
         if (result.resultCode == RESULT_OK) {
-            // Successfully signed in
-            // val user = FirebaseAuth.getInstance().currentUser
-            // Log.i(TAG, "Successfully signed in user ${user}!")
-
-            // navigate to the reminders activity on successful login
-            val intent = Intent(this, RemindersActivity::class.java)
-            startActivity(intent)
-
-            // close out this activity
-            this.finish()
+            navigateToRemindersActivity()
         } else {
             // Sign in failed.
-            //if (response == null) {
             Snackbar.make(binding.authCoordinatorLayout, R.string.sign_in_failed, Snackbar.LENGTH_LONG)
                 .show()
-            //}
-
         }
     }
 }

@@ -10,11 +10,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import com.firebase.ui.auth.AuthUI
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import com.udacity.project4.R
 import com.udacity.project4.authentication.AuthenticationActivity
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentRemindersBinding
+import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import com.udacity.project4.utils.setTitle
 import com.udacity.project4.utils.setup
@@ -29,14 +32,18 @@ class ReminderListFragment : BaseFragment() {
     //use Koin to retrieve the ViewModel instance
     override val _viewModel: RemindersListViewModel by viewModel()
     private lateinit var binding: FragmentRemindersBinding
+    private lateinit var auth: FirebaseAuth
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         // navigate to the login screen if not authenticated
-        if (FirebaseAuth.getInstance().currentUser == null) {
-            findNavController().navigate(R.id.authenticationActivity)
-            requireActivity().finish()
+        auth = Firebase.auth
+        if (auth.currentUser == null) {
+            // findNavController().navigate(R.id.authenticationActivity)
+            val intent = Intent(requireActivity(), AuthenticationActivity::class.java)
+            startActivity(intent)
+            // requireActivity().finish()
         }
 
         binding = FragmentRemindersBinding.inflate(inflater, container, false)
@@ -68,6 +75,10 @@ class ReminderListFragment : BaseFragment() {
         super.onResume()
         //load the reminders list on the ui
         _viewModel.loadReminders()
+        if (auth.currentUser == null) {
+            // findNavController().navigate(R.id.authenticationActivity)
+            requireActivity().finish()
+        }
     }
 
 //    private fun observeAuthenticationState() {

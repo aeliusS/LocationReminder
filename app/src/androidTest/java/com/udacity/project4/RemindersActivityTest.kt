@@ -85,7 +85,8 @@ class RemindersActivityTest :
         runBlocking {
             repository.deleteAllReminders()
         }
-        auth = FirebaseAuth.getInstance()
+        auth = Firebase.auth
+        // auth.signOut()
     }
 
     @Before
@@ -105,6 +106,7 @@ class RemindersActivityTest :
 
     @Test
     fun test_logout() {
+        // make sure you are logged in first
         if (auth.currentUser == null) {
             login()
             idlingResource.increment()
@@ -114,7 +116,7 @@ class RemindersActivityTest :
         dataBindingIdlingResource.monitorActivity(activityScenario)
 
         // if logged in, log out
-        if (auth.currentUser != null) {
+        if (FirebaseAuth.getInstance().currentUser != null) {
             onView(withText("LOGOUT")).check(matches(isDisplayed()))
             onView(withText("LOGOUT")).perform(click())
         }
@@ -128,7 +130,7 @@ class RemindersActivityTest :
     }
 
     private fun login() {
-        auth
+        FirebaseAuth.getInstance()
             .signInWithEmailAndPassword("testing@example.com", "asdf1234")
             .addOnCompleteListener() { task ->
                 assertThat(task.isSuccessful, `is`(true))
@@ -136,15 +138,20 @@ class RemindersActivityTest :
             }
     }
 
-    private fun logout() {
-        AuthUI.getInstance().signOut(appContext)
-    }
-
 
     // TODO: add new reminder
     @Test
     fun addNewReminder() = runBlocking {
-        // start up reminder screen
+        // 1. make sure you are logged in first
+        if (auth.currentUser == null) {
+            login()
+            idlingResource.increment()
+        }
+        // 2. start up the reminder screen
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        // 3. add in a new reminder
 
     }
 
