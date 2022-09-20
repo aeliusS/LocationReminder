@@ -78,6 +78,7 @@ class AuthenticationActivity : AppCompatActivity() {
 
     private fun navigateToRemindersActivity() {
         val intent = Intent(this, RemindersActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
         startActivity(intent)
         // close out this activity
         this.finish()

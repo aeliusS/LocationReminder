@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
@@ -41,9 +42,7 @@ class ReminderListFragment : BaseFragment() {
         auth = Firebase.auth
         if (auth.currentUser == null) {
             // findNavController().navigate(R.id.authenticationActivity)
-            val intent = Intent(requireActivity(), AuthenticationActivity::class.java)
-            startActivity(intent)
-            // requireActivity().finish()
+            navigateToAuthentication()
         }
 
         binding = FragmentRemindersBinding.inflate(inflater, container, false)
@@ -54,7 +53,22 @@ class ReminderListFragment : BaseFragment() {
 
         binding.refreshLayout.setOnRefreshListener { _viewModel.loadReminders() }
 
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    requireActivity().finish()
+                }
+            })
+
         return binding.root
+    }
+
+    fun navigateToAuthentication() {
+        val intent = Intent(requireActivity(), AuthenticationActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+        startActivity(intent)
+        // requireActivity().finish()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -121,8 +135,7 @@ class ReminderListFragment : BaseFragment() {
                         AuthUI.getInstance().signOut(requireContext())
 
                         // navigate to the login screen
-                        findNavController().navigate(R.id.authenticationActivity)
-                        requireActivity().finish()
+                        navigateToAuthentication()
 
                         true
                     }
