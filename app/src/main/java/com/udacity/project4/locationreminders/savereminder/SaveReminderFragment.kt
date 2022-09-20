@@ -70,31 +70,14 @@ class SaveReminderFragment : BaseFragment() {
         }
 
         binding.saveReminder.setOnClickListener {
-            val title = _viewModel.reminderTitle.value
-            val description = _viewModel.reminderDescription.value
-            val location = _viewModel.reminderSelectedLocationStr.value
-            val latitude = _viewModel.latitude.value
-            val longitude = _viewModel.longitude.value
-
-            // TODO: move validation to the view model layer
-            if (title.isNullOrBlank()) {
-                binding.reminderTitle.apply {
-                    error = getString(R.string.err_enter_title)
-                    hint = getString(R.string.select_title)
-                }
-                return@setOnClickListener
-            }
-            if (location.isNullOrBlank() || latitude == null || longitude == null) {
-                binding.selectLocation.error = getString(R.string.err_select_location)
-                Snackbar.make(
-                    binding.saveReminderCoordinatorLayout,
-                    R.string.err_select_location,
-                    Snackbar.LENGTH_LONG
-                ).show()
-                return@setOnClickListener
-            }
-
-            val reminder = ReminderDataItem(title,description,location,latitude,longitude)
+            val reminder = ReminderDataItem(
+                _viewModel.reminderTitle.value,
+                _viewModel.reminderDescription.value,
+                _viewModel.reminderSelectedLocationStr.value,
+                _viewModel.latitude.value,
+                _viewModel.longitude.value
+            )
+            if (!_viewModel.validateEnteredData(reminder)) return@setOnClickListener
 
             // TODO: remove after testing
             removeGeofencesAndReminders()

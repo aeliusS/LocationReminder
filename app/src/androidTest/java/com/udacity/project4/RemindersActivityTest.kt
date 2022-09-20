@@ -1,6 +1,8 @@
 package com.udacity.project4
 
 import android.app.Application
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onIdle
@@ -11,7 +13,6 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
-import com.firebase.ui.auth.AuthUI
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -28,6 +29,7 @@ import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.`is`
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -36,7 +38,6 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.AutoCloseKoinTest
 import org.koin.test.get
-import kotlin.test.assertFailsWith
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -47,7 +48,7 @@ class RemindersActivityTest :
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
     private lateinit var auth: FirebaseAuth
-    private val dataBindingIdlingResource = DataBindingIdlingResource()
+    // private val dataBindingIdlingResource = DataBindingIdlingResource()
     private val idlingResource = EspressoIdlingResource.countingIdlingResource
 
     /**
@@ -97,24 +98,25 @@ class RemindersActivityTest :
     @Before
     fun registerIdlingResource() {
         IdlingRegistry.getInstance().register(idlingResource)
-        IdlingRegistry.getInstance().register(dataBindingIdlingResource)
+        // IdlingRegistry.getInstance().register(dataBindingIdlingResource)
     }
 
     @After
     fun unregisterIdlingResource() {
         IdlingRegistry.getInstance().unregister(idlingResource)
-        IdlingRegistry.getInstance().unregister(dataBindingIdlingResource)
+        // IdlingRegistry.getInstance().unregister(dataBindingIdlingResource)
     }
 
 
     // TODO: add End to End testing to the app
 
-    /* Flaky test */
+    /* FLAKY TEST */
     @Test
     fun test_logout() {
         // start up the reminder screen
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
-        dataBindingIdlingResource.monitorActivity(activityScenario)
+        // dataBindingIdlingResource.monitorActivity(activityScenario)
+        activityScenario.moveToState(Lifecycle.State.STARTED)
 
         // if logged in, test log out
         if (FirebaseAuth.getInstance().currentUser != null) {
