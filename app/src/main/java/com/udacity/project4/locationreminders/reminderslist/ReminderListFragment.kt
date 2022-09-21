@@ -66,9 +66,8 @@ class ReminderListFragment : BaseFragment() {
 
     fun navigateToAuthentication() {
         val intent = Intent(requireActivity(), AuthenticationActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
         startActivity(intent)
-        // requireActivity().finish()
+        requireActivity().finish()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -90,7 +89,7 @@ class ReminderListFragment : BaseFragment() {
         //load the reminders list on the ui
         _viewModel.loadReminders()
         if (auth.currentUser == null) {
-            // findNavController().navigate(R.id.authenticationActivity)
+            findNavController().navigate(R.id.authenticationActivity)
             requireActivity().finish()
         }
     }

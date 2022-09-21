@@ -34,9 +34,7 @@ import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
-import com.udacity.project4.utils.hasPermissions
-import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
-import com.udacity.project4.utils.shouldShowRequestPermissionRationale
+import com.udacity.project4.utils.*
 import org.koin.android.ext.android.inject
 import java.util.*
 
@@ -69,6 +67,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 arrayOf()
             }
     }
+    private val idlingResource = EspressoIdlingResource.countingIdlingResource
 
     private var map: GoogleMap? = null
     private var geocoder: Geocoder? = null
@@ -90,6 +89,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         binding.viewModel = _viewModel
         binding.lifecycleOwner = viewLifecycleOwner
+        idlingResource.increment()
 
         // add in the menu options
         val menuHost: MenuHost = requireActivity()
@@ -114,6 +114,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         _viewModel.locationPermissionGranted.observe(viewLifecycleOwner) { updateLocationUI() }
 
+        binding.buttonSave.setOnClickListener {
+            wrapEspressoIdlingResource { onLocationSelected() }
+        }
+
         return binding.root
     }
 
@@ -126,7 +130,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun onLocationSelected() {
-        // Log.d(TAG, "onLocationSelected called")
+        if (_viewModel.longitude.value == null || _viewModel.latitude.value == null ||
+                _viewModel.reminderSelectedLocationStr.value == null) {
+            Snackbar.make(
+                binding.mainLayout,
+                R.string.err_select_location,
+                Snackbar.LENGTH_SHORT
+            ).show()
+            return
+        }
         findNavController().popBackStack(R.id.saveReminderFragment, false)
     }
 
@@ -265,6 +277,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         // turn on the my location layer and get current location of the device
         updateLocationUI()
         checkDeviceLocationSettingsAndGetLocation()
+        idlingResource.decrement()
     }
 
     private fun updateLocationUI() {
@@ -294,6 +307,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun setMapClick() {
         map?.setOnMapClickListener { latLng ->
+            idlingResource.increment()
             _viewModel.selectedMarker.value?.remove()
             val snippet = getStreetAddress(latLng)
             _viewModel.selectedMarker.value = map?.addMarker(
@@ -304,12 +318,14 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             )
             _viewModel.selectedMarker.value?.showInfoWindow()
             _viewModel.updateChosenLocation(latLng, snippet)
-            showChooseLocationDialog(snippet)
+            idlingResource.decrement()
+            // showChooseLocationDialog(snippet)
         }
     }
 
     private fun setPoiClick() {
         map?.setOnPoiClickListener { poi ->
+            idlingResource.increment()
             _viewModel.selectedMarker.value?.remove()
             val snippet = getStreetAddress(poi.latLng)
             val title = poi.name.replace("\n", " ")
@@ -321,14 +337,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             )
             _viewModel.selectedMarker.value?.showInfoWindow()
             _viewModel.updateChosenLocation(poi.latLng, title)
-            showChooseLocationDialog(title)
+            idlingResource.decrement()
+            // showChooseLocationDialog(title)
         }
     }
 
     /**
      * Show a dialog that asks the user to confirm the location selected
      * */
-    // TODO: Make this a button
+    // Make this a button?
     private fun showChooseLocationDialog(snippet: String) {
         Snackbar.make(
             binding.mainLayout,
@@ -337,6 +354,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         ).setAction(R.string.ok) {
             onLocationSelected()
         }.show()
+        Log.d(TAG, "showed location dialog")
+        idlingResource.decrement()
     }
 
     private fun getStreetAddress(latLng: LatLng): String {
