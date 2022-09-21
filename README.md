@@ -63,3 +63,4 @@ Step by step explanation of how to get a dev environment running.
 * [WorkManager](https://developer.android.com/topic/libraries/architecture/workmanager) - Run background service from the background application
 
 ## License
+Apache License 2.0
