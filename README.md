@@ -13,12 +13,6 @@ A Todo list app with location reminders that remind the user to do something whe
 </resources>
 ```
 
-### Dependencies
-
-```
-1. A created project on Firebase console.
-2. A create a project on Google console.
-```
 
 ### Installation
 
@@ -35,22 +29,11 @@ Step by step explanation of how to get a dev environment running.
     d. Add your package name and SHA-1 signing-certificate fingerprint.
     c. Enable Maps SDK for Android from API restrictions and Save.
     d. Copy the api key to the `google_maps_api.xml`
+    Example:
+    <resources>
+        <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">FILL_OUT_HERE</string>
+    </resources>
 3. Run the app on your mobile phone or emulator with Google Play Services in it.
-```
-
-## Testing
-
-Right click on the `test` or `androidTest` packages and select Run Tests
-
-### Break Down Tests
-
-Explain what each test does and why
-
-```
-1.androidTest
-        //TODO: Students explain their testing here.
-2. test
-        //TODO: Students explain their testing here.
 ```
 
 ## Project Instructions
@@ -72,15 +55,11 @@ Explain what each test does and why
         c. Add End-To-End testing for the Fragments navigation.
 
 
-## Student Deliverables:
-
-1. APK file of the final project.
-2. Git Repository with the code.
 
 ## Built With
 
 * [Koin](https://github.com/InsertKoinIO/koin) - A pragmatic lightweight dependency injection framework for Kotlin.
 * [FirebaseUI Authentication](https://github.com/firebase/FirebaseUI-Android/blob/master/auth/README.md) - FirebaseUI provides a drop-in auth solution that handles the UI flows for signing
-* [JobIntentService](https://developer.android.com/reference/androidx/core/app/JobIntentService) - Run background service from the background application, Compatible with >= Android O.
+* [WorkManager](https://developer.android.com/topic/libraries/architecture/workmanager) - Run background service from the background application
 
 ## License

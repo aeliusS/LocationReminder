@@ -79,8 +79,8 @@ class SaveReminderFragment : BaseFragment() {
             )
             if (!_viewModel.validateEnteredData(reminder)) return@setOnClickListener
 
-            // TODO: remove after testing
-            removeGeofencesAndReminders()
+            // remove after testing
+            // removeGeofencesAndReminders()
 
             addGeofenceAndSaveReminder(reminder)
         }

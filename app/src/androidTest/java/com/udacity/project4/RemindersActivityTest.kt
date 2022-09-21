@@ -102,6 +102,11 @@ class RemindersActivityTest :
         IdlingRegistry.getInstance().unregister(dataBindingIdlingResource)
     }
 
+    @After
+    fun cleanupRepository() = runBlocking {
+        repository.deleteAllReminders()
+    }
+
     /* FLAKY TEST */
     /*
     @Test
