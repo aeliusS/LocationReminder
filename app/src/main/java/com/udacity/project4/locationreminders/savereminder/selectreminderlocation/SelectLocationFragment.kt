@@ -48,25 +48,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         private const val KEY_LOCATION = "LOCATION"
         private const val DEFAULT_ZOOM = 15f
 
-        private val permissionsArray = if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            )
-        } else {
+        private val permissionsArray =
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
             )
-        }
-        private val backgroundPermissionArray =
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-                arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-            } else {
-                arrayOf()
-            }
     }
+
     private val idlingResource = EspressoIdlingResource.countingIdlingResource
 
     private var map: GoogleMap? = null
@@ -89,7 +77,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         binding.viewModel = _viewModel
         binding.lifecycleOwner = viewLifecycleOwner
-        idlingResource.increment()
+        idlingResource.increment() // decrements in onMapReady
 
         // add in the menu options
         val menuHost: MenuHost = requireActivity()
@@ -129,9 +117,34 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         super.onSaveInstanceState(outState)
     }
 
+    override fun onMapReady(googleMap: GoogleMap) {
+        map = googleMap
+        Log.d(TAG, "Map ready")
+
+        geocoder = Geocoder(context, Locale.getDefault())
+
+        // request runtime permissions if necessary; API level 23 (M) and higher
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestForegroundLocationPermissions()
+        }
+
+        // setup map interactions
+        setMapClick() // we only care about point of interest (poi) so leave this function unused
+        setPoiClick()
+
+        // load style
+        setMapStyle()
+
+        // turn on the my location layer and get current location of the device
+        // updateLocationUI()
+        // checkDeviceLocationSettingsAndGetLocation()
+        idlingResource.decrement()
+    }
+
     private fun onLocationSelected() {
         if (_viewModel.longitude.value == null || _viewModel.latitude.value == null ||
-                _viewModel.reminderSelectedLocationStr.value == null) {
+            _viewModel.reminderSelectedLocationStr.value == null
+        ) {
             Snackbar.make(
                 binding.mainLayout,
                 R.string.err_select_location,
@@ -178,17 +191,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             val granted = permissions.entries.all {
                 it.value
             }
-            // check if background location was requested in this map
-            val background = permissions.entries.any {
-                it.key == "android.permission.ACCESS_BACKGROUND_LOCATION"
-            }
             if (granted) {
                 Log.d(TAG, "Permissions granted")
                 _viewModel.updateLocationGrantedTo(true)
-                // if background location wasn't already granted
-                if (!background && backgroundPermissionArray.isNotEmpty()) {
-                    requestBackgroundLocationPermission()
-                }
             } else {
                 // not all permissions granted
                 Log.d(TAG, "Permissions not granted")
@@ -198,7 +203,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
                 Snackbar.make(
                     binding.mainLayout,
-                    if (background) R.string.background_permission_denied else R.string.precise_location_permission_denied,
+                    R.string.precise_location_permission_denied,
                     Snackbar.LENGTH_INDEFINITE
                 )
                     .setAction(R.string.settings) {
@@ -213,7 +218,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun requestForegroundLocationPermissions() {
-        if (hasPermissions(permissionsArray.plus(backgroundPermissionArray))) {
+        if (hasPermissions(permissionsArray)) {
             Log.d(TAG, "Permissions already granted")
             _viewModel.updateLocationGrantedTo(true)
             return
@@ -242,44 +247,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     }
 
-    private fun requestBackgroundLocationPermission() {
-        if (hasPermissions(backgroundPermissionArray)) {
-            Log.d(TAG, "Background permissions already granted")
-            return
-        }
-        Snackbar.make(
-            binding.mainLayout,
-            R.string.background_permission_denied,
-            Snackbar.LENGTH_INDEFINITE
-        ).setAction(R.string.ok) {
-            requestPermissions.launch(backgroundPermissionArray)
-        }.show()
-    }
-
-    override fun onMapReady(googleMap: GoogleMap) {
-        map = googleMap
-        Log.d(TAG, "Map ready")
-
-        geocoder = Geocoder(context, Locale.getDefault())
-
-        // request runtime permissions if necessary; API level 23 (M) and higher
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestForegroundLocationPermissions()
-        }
-
-        // setup map interactions
-        setMapClick() // we only care about point of interest (poi) so leave this function unused
-        setPoiClick()
-
-        // load style
-        setMapStyle()
-
-        // turn on the my location layer and get current location of the device
-        updateLocationUI()
-        checkDeviceLocationSettingsAndGetLocation()
-        idlingResource.decrement()
-    }
-
     private fun updateLocationUI() {
         if (map == null) return
         try {
@@ -289,6 +256,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     isMyLocationEnabled = true
                     uiSettings.isMyLocationButtonEnabled = true
                 }
+                checkDeviceLocationSettingsAndGetLocation()
             } else {
                 map?.apply {
                     isMyLocationEnabled = false
@@ -402,7 +370,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private fun getDeviceLocation() {
         try {
             if (_viewModel.locationPermissionGranted.value == true) {
-                val locationResult = fusedLocationProviderClient.lastLocation
+                val locationResult = fusedLocationProviderClient.getCurrentLocation(
+                    Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                    null
+                )
                 locationResult.addOnCompleteListener(requireActivity()) { task ->
                     if (task.isSuccessful) {
                         // Set the map's camera position to the current location of the device.
@@ -457,7 +428,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
         locationSettingsResponseTask.addOnSuccessListener {
             Log.d(TAG, "Location is turned on")
-            _viewModel.updateLocationGrantedTo(true)
             getDeviceLocation()
         }
     }
@@ -474,7 +444,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun displayTurnLocationOnError() {
-        _viewModel.updateLocationGrantedTo(false)
         Snackbar.make(
             binding.mainLayout,
             R.string.location_required_error,
@@ -488,7 +457,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onResume() {
         super.onResume()
-        if (!hasPermissions(permissionsArray.plus(backgroundPermissionArray))) {
+        if (!hasPermissions(permissionsArray)) {
             requestForegroundLocationPermissions()
         }
     }

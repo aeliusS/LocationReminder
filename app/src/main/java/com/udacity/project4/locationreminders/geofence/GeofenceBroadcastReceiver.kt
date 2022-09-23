@@ -47,15 +47,14 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             val geofenceTransition = geofencingEvent.geofenceTransition
             if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
                 Log.v(TAG, "Geofence entered")
-                val reminderId = when {
-                    geofencingEvent.triggeringGeofences?.isNotEmpty() == true ->
-                        geofencingEvent.triggeringGeofences!![0].requestId
-                    else -> {
-                        Log.e(TAG, "No Geofence Trigger Found! Abort mission!")
-                        return
-                    }
+                if (geofencingEvent.triggeringGeofences == null) {
+                    Log.e(TAG, "No Geofence Trigger Found! Abort mission!")
+                    return
                 }
-                sendWorkerNotification(context, reminderId)
+                for (geofence in geofencingEvent.triggeringGeofences!!) {
+                    val reminderId = geofence.requestId
+                    sendWorkerNotification(context, reminderId)
+                }
             } else {
                 Log.d(TAG, "Geofence transition event: $geofenceTransition")
             }
