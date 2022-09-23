@@ -43,4 +43,8 @@ class FakeRemindersLocalRepository: ReminderDataSource {
             remindersServiceData[reminder.id] = reminder
         }
     }
+
+    override suspend fun deleteReminder(id: String) {
+        remindersServiceData.remove(id)
+    }
 }

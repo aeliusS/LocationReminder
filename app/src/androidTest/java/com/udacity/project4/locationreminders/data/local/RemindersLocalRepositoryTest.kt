@@ -71,4 +71,31 @@ class RemindersLocalRepositoryTest {
         assertThat(result.data.longitude, `is`(0.0))
     }
 
+    @Test
+    fun saveReminder_deleteReminder() = runTest {
+        // given - a new reminder saved in the database
+        val newReminder = ReminderDTO("title", "description", "location", 0.0, 0.0)
+        localDataSource.saveReminder(newReminder)
+
+        // when - the reminder is deleted
+        localDataSource.deleteReminder(newReminder.id)
+
+        // then - the reminder is removed from the db
+        val result = localDataSource.getReminder(newReminder.id)
+        result as Result.Error
+        assertThat(result, `is`(Result.Error("Reminder not found!")))
+    }
+
+    @Test
+    fun getReminder_NoData() = runTest {
+        // given - no reminder in db
+
+        // when - query for a reminder with invalid id
+        val result = localDataSource.getReminder("-1")
+
+        // then - reminder not found is returned
+        result as Result.Error
+        assertThat(result, `is`(Result.Error("Reminder not found!")))
+    }
+
 }

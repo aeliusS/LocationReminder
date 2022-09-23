@@ -20,6 +20,7 @@ import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
 import org.junit.Test
+import kotlin.test.assertNull
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
@@ -54,12 +55,26 @@ class RemindersDaoTest {
         val loaded = database.reminderDao().getReminderById(reminder.id)
 
         // then - the loaded data contains the expected values
-        assertThat<ReminderDTO>(loaded as ReminderDTO, notNullValue())
+        assertThat(loaded as ReminderDTO, notNullValue())
         assertThat(loaded.id, `is`(reminder.id))
         assertThat(loaded.title, `is`(reminder.title))
         assertThat(loaded.description, `is`(reminder.description))
         assertThat(loaded.location, `is`(reminder.location))
         assertThat(loaded.latitude, `is`(reminder.latitude))
+    }
+
+    @Test
+    fun saveAndDeleteReminder() = runTest {
+        // given - insert a new reminder
+        val reminder = ReminderDTO("title", "description", "location", 0.0, 0.0)
+        database.reminderDao().saveReminder(reminder)
+
+        // when - the reminder is deleted
+        database.reminderDao().deleteReminder(reminder.id)
+
+        // then - the reminder is removed from the db
+        val loaded = database.reminderDao().getReminderById(reminder.id)
+        assertNull(loaded)
     }
 
 }

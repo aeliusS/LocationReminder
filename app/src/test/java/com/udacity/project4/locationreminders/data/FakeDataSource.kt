@@ -43,6 +43,10 @@ class FakeDataSource : ReminderDataSource {
         remindersServiceData.clear()
     }
 
+    override suspend fun deleteReminder(id: String) {
+        remindersServiceData.remove(id)
+    }
+
     fun addReminders(vararg reminders: ReminderDTO) {
         for (reminder in reminders) {
             remindersServiceData[reminder.id] = reminder

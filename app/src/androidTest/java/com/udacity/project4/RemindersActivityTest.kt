@@ -1,6 +1,7 @@
 package com.udacity.project4
 
 import android.app.Application
+import android.view.View
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -9,6 +10,7 @@ import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.withDecorView
 import androidx.test.espresso.matcher.ViewMatchers.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -107,39 +109,6 @@ class RemindersActivityTest :
         repository.deleteAllReminders()
     }
 
-    /* FLAKY TEST */
-    /*
-    @Test
-    fun test_logout() = runBlocking {
-        Intents.init()
-        // start up the reminder screen
-        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
-        dataBindingIdlingResource.monitorActivity(activityScenario)
-        activityScenario.moveToState(Lifecycle.State.STARTED)
-
-        intending(hasComponent(AuthenticationActivity::class.java.name)).respondWithFunction {
-            login()
-            idlingResource.increment()
-            Instrumentation.ActivityResult(Activity.RESULT_OK, Intent())
-        }
-        // val result = Instrumentation.ActivityResult(Activity.RESULT_OK, Intent())
-        // intending(hasComponent(AuthenticationActivity::class.java.name)).respondWith(result)
-
-        // if logged in, test log out
-        if (FirebaseAuth.getInstance().currentUser != null) {
-            // onView(withText("LOGOUT")).check(matches(isDisplayed()))
-            onView(withText("LOGOUT")).perform(click())
-
-            // verify that the logout screen is displayed
-            onView(withText("LOGIN")).check(matches(isDisplayed()))
-        }
-
-        Intents.release()
-        // close out the activity
-        activityScenario.close()
-    }
-    */
-
     private fun login() {
         FirebaseAuth.getInstance()
             .signInWithEmailAndPassword("testing@example.com", "asdf1234")
@@ -159,12 +128,12 @@ class RemindersActivityTest :
         // 2. start up the activity
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
         dataBindingIdlingResource.monitorActivity(activityScenario)
-        /*
+        // /*
         var decorView: View? = null
         activityScenario.onActivity {
             decorView = it.window.decorView
         }
-        */
+        // */
 
         // 3. add in a new reminder
         onView(withId(R.id.addReminderFAB)).perform(click())
@@ -181,12 +150,12 @@ class RemindersActivityTest :
         onView(withId(R.id.buttonSave)).perform(click())
         onView(withId(R.id.saveReminder)).perform(click())
 
-        // 4. can't verify toast message
-        /*
+        // 4. verify toast message. this assertion method doesn't work in API level 30+. It hangs
+        // /*
         onView(withText("Reminder Saved !"))
-            .inRoot(withDecorView(not(dataBindingIdlingResource.decorView)))
+            .inRoot(withDecorView(not(decorView)))
             .check(matches(isDisplayed()))
-        */
+        // */
 
         // 5. verify new reminder on the screen
         onView(withId(R.id.title)).check(matches(withText("Reminder 1")))
@@ -197,7 +166,7 @@ class RemindersActivityTest :
     }
 
     @Test
-    fun addInvalidReminder_getErrorToast() {
+    fun addInvalidReminder_getErrorSnackbar() {
         // 1. make sure you are logged in first
         if (auth.currentUser == null) {
             login()

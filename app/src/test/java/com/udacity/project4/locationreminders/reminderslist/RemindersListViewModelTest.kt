@@ -118,7 +118,7 @@ class RemindersListViewModelTest : KoinTest {
         // it should set the error values
         val showSnackBar = remindersListViewModel.showSnackBar.getOrAwaitValue()
         val showNoData = remindersListViewModel.showNoData.getOrAwaitValue()
-        assertThat(showSnackBar.isNullOrBlank(), `is`(false))
+        assertThat(showSnackBar, `is`("Test exception"))
         assertThat(showNoData, `is`(true))
     }
 
