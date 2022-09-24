@@ -77,7 +77,6 @@ class SaveReminderViewModelTest : KoinTest {
         assertThat(saveReminderViewModel.selectedPOI.getOrAwaitValue(), (nullValue()))
         assertThat(saveReminderViewModel.latitude.getOrAwaitValue(), (nullValue()))
         assertThat(saveReminderViewModel.longitude.getOrAwaitValue(), (nullValue()))
-        assertThat(saveReminderViewModel.locationPermissionGranted.getOrAwaitValue(), (nullValue()))
         assertThat(saveReminderViewModel.selectedMarker.getOrAwaitValue(), (nullValue()))
     }
 

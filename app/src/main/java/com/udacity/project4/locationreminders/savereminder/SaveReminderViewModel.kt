@@ -1,7 +1,6 @@
 package com.udacity.project4.locationreminders.savereminder
 
 import android.app.Application
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
@@ -24,10 +23,6 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
     val latitude = MutableLiveData<Double?>()
     val longitude = MutableLiveData<Double?>()
 
-    private val _locationPermissionGranted = MutableLiveData(false)
-    val locationPermissionGranted : LiveData<Boolean?>
-        get() = _locationPermissionGranted
-
     val selectedMarker = MutableLiveData<Marker?>()
 
     /**
@@ -41,7 +36,6 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
         latitude.value = null
         longitude.value = null
 
-        _locationPermissionGranted.value = null
         selectedMarker.value = null
     }
 
@@ -90,13 +84,6 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
             return false
         }
         return true
-    }
-
-    /**
-     * update whether location permission has been granted
-     * */
-    fun updateLocationGrantedTo(value: Boolean) {
-        _locationPermissionGranted.value = value
     }
 
     /**

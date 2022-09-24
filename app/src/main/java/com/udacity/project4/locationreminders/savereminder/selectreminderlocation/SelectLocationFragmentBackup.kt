@@ -1,6 +1,8 @@
 package com.udacity.project4.locationreminders.savereminder.selectreminderlocation
 
+/** Keeping this class here as a reference for future work */
 
+/*
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
@@ -472,3 +474,4 @@ class SelectLocationFragmentBackup : BaseFragment(), OnMapReadyCallback {
         }
     }
 }
+*/
