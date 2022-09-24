@@ -46,7 +46,7 @@ class RemindersDaoTest {
     fun closeDb() = database.close()
 
     @Test
-    fun saveReminderAndGetById() = runTest {
+    fun saveReminder_testGetById() = runTest {
         // given - insert a reminder
         val reminder = ReminderDTO("title", "description", "location", 0.0, 0.0)
         database.reminderDao().saveReminder(reminder)
@@ -64,7 +64,7 @@ class RemindersDaoTest {
     }
 
     @Test
-    fun saveAndDeleteReminder() = runTest {
+    fun saveReminder_testDeleteReminder() = runTest {
         // given - insert a new reminder
         val reminder = ReminderDTO("title", "description", "location", 0.0, 0.0)
         database.reminderDao().saveReminder(reminder)

@@ -39,7 +39,7 @@ import org.mockito.Mockito.*
 //UI Testing
 @MediumTest
 class ReminderListFragmentTest: AutoCloseKoinTest() {
-    private lateinit var repository: ReminderDataSource
+    private lateinit var repository: FakeRemindersLocalRepository
     private lateinit var appContext: Application
 
     @Before
@@ -100,7 +100,7 @@ class ReminderListFragmentTest: AutoCloseKoinTest() {
     }
 
     @Test
-    fun noReminders_DisplaysNoData() = runTest {
+    fun noReminders_displaysNoData() = runTest {
         // given a repository with no reminders
 
         // when - reminder list fragment is launched
@@ -108,6 +108,19 @@ class ReminderListFragmentTest: AutoCloseKoinTest() {
 
         // then - no data is displayed
         onView(withId(R.id.noDataTextView)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun loadReminders_showError() = runTest {
+        // given - a repository with reminder(s) in it and setReturnError set to true
+        repository.saveReminder(ReminderDTO("title1", "description1", "location1", 0.0, 0.0))
+        repository.setReturnError(true)
+
+        // when - reminder list fragment is launched
+        launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
+
+        // then - a snackbar will display error message
+        onView(withText("Test exception")).check(matches(isDisplayed()))
     }
 
 }

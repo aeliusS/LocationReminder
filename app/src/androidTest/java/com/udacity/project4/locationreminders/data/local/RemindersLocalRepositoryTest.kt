@@ -87,7 +87,7 @@ class RemindersLocalRepositoryTest {
     }
 
     @Test
-    fun getReminder_NoData() = runTest {
+    fun getReminder_testInvalidId() = runTest {
         // given - no reminder in db
 
         // when - query for a reminder with invalid id
