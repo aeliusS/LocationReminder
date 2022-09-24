@@ -185,7 +185,8 @@ class RemindersActivityTest :
         onView(withId(R.id.saveReminder)).perform(click())
 
         // 4. should get snackbar error message
-        onView(withText(R.string.err_select_location)).check(matches(isDisplayed()))
+        onView(withText(R.string.err_select_location))
+            .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
     }
 
 }

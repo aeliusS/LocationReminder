@@ -7,6 +7,7 @@ import com.udacity.project4.base.BaseViewModel
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
+import com.udacity.project4.utils.wrapEspressoIdlingResource
 import kotlinx.coroutines.launch
 
 class RemindersListViewModel(
@@ -33,7 +34,7 @@ class RemindersListViewModel(
      * or show error if any
      */
     @Suppress("UNCHECKED_CAST")
-    fun loadReminders() {
+    fun loadReminders() = wrapEspressoIdlingResource {
         showLoading.value = true
         viewModelScope.launch {
             //interacting with the dataSource has to be through a coroutine
