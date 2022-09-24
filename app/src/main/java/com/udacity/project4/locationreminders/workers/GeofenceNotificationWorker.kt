@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.google.android.gms.location.LocationServices
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result.Success
@@ -39,7 +40,12 @@ class GeofenceNotificationWorker(
                         Log.d(TAG, "Found the reminder for id: ${reminder.id}")
                         sendNotification(applicationContext, reminder.asReminderDataItem())
                     }
-                    is Error -> Log.e(TAG, "Did not find reminder for $requestId")
+                    is Error -> {
+                        Log.e(TAG, "Did not find reminder for $requestId. Removing geofence")
+                        // geofences created during tests. should instead have a menu to clear all
+                        val geofencingClient = LocationServices.getGeofencingClient(applicationContext)
+                        geofencingClient.removeGeofences(mutableListOf(requestId))
+                    }
                 }
             } else {
                 Log.e(TAG, "Request Id is null")
