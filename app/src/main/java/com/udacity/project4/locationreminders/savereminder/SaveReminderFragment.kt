@@ -29,11 +29,14 @@ import com.udacity.project4.locationreminders.geofence.GeofencingConstants.ACTIO
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class SaveReminderFragment : BaseFragment() {
 
     //Get the view model this time as a single to be shared with the another fragment
-    override val _viewModel by inject<SaveReminderViewModel>()
+    // override val _viewModel by inject<SaveReminderViewModel>()
+    override val _viewModel by sharedViewModel<SaveReminderViewModel>()
     private lateinit var binding: FragmentSaveReminderBinding
     private var geofencingClient: GeofencingClient? = null
     private var reminder: ReminderDataItem? = null
@@ -132,17 +135,16 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
-    // used for testing
-    private fun removeGeofencesAndReminders() {
+    // useful for testing.
+    fun removeAllGeofences() {
         if (geofencingClient == null) geofencingClient =
             LocationServices.getGeofencingClient(requireActivity())
-
         geofencingClient?.removeGeofences(geofencePendingIntent)
-        _viewModel.removeReminders()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d(TAG, "onDestroy called")
         //make sure to clear the view model after destroy, as it's a single view model.
         _viewModel.onClear()
     }
@@ -232,6 +234,7 @@ class SaveReminderFragment : BaseFragment() {
                         null
                     )
                     /*
+                    // does not work in fragment
                     exception.startResolutionForResult(
                         requireActivity(),
                         REQUEST_TURN_DEVICE_LOCATION_ON

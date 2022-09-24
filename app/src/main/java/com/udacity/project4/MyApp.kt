@@ -15,6 +15,7 @@ import com.udacity.project4.locationreminders.workers.GeofenceNotificationWorker
 import kotlinx.coroutines.Dispatchers
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.androidx.workmanager.koin.workManagerFactory
@@ -68,9 +69,10 @@ class MyApp : Application(), OnMapsSdkInitializedCallback, KoinComponent, Config
         val myModule = module {
             //Declare a ViewModel - be later inject into Fragment with dedicated injector using by viewModel()
             viewModelOf(::RemindersListViewModel)
+            viewModelOf(::SaveReminderViewModel)
 
             //Declare singleton definitions to be later injected using by inject()
-            singleOf(::SaveReminderViewModel)
+            // singleOf(::SaveReminderViewModel)
             single<ReminderDataSource> { RemindersLocalRepository(get()) }
             single { LocalDB.createRemindersDao(this@MyApp) }
             single { GeofenceTransitionsJobIntentService() }

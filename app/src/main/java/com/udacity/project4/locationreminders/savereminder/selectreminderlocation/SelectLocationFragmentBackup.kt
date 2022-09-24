@@ -41,7 +41,7 @@ import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.*
 
-class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
+class SelectLocationFragmentBackup : BaseFragment(), OnMapReadyCallback {
 
     companion object {
         private const val TAG = "SelectLocationFragment"
