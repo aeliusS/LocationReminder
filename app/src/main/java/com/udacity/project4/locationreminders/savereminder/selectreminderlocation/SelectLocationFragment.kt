@@ -321,7 +321,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private fun getDeviceLocation() {
         try {
             if (foregroundLocationPermissionApproved()) {
-                _viewModel.showToast.value = "Getting current location"
+                // using a toast here will interfere with the toast espresso test
+                // _viewModel.showToast.value = "Getting current location"
                 val locationResult = fusedLocationProviderClient.getCurrentLocation(
                     Priority.PRIORITY_BALANCED_POWER_ACCURACY,
                     null
