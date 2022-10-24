@@ -2,7 +2,6 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
@@ -14,10 +13,8 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.*
-import android.widget.Toast
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
@@ -38,16 +35,10 @@ import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.*
 import com.udacity.project4.utils.*
-import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.*
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
-    private val runningQOrLater: Boolean by lazy {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-    }
-
     private val idlingResource = EspressoIdlingResource.countingIdlingResource
 
     private var map: GoogleMap? = null
@@ -427,8 +418,3 @@ private const val DEFAULT_ZOOM = 15f
 // permissions
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 private const val LOCATION_PERMISSION_INDEX = 0
-private val permissionsArray =
-    arrayOf(
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION
-    )
